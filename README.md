@@ -58,6 +58,21 @@ codex-trader midday-scan             # dry-run action scan from positions
 codex-trader daily-summary           # append EOD snapshot + Telegram/fallback notify
 ```
 
+## Automation Runner
+
+Hermes cron jobs should call the guarded runner, not raw broker commands:
+
+```bash
+bash scripts/cron_runner.sh smoke
+bash scripts/cron_runner.sh pre-market
+bash scripts/cron_runner.sh market-open
+bash scripts/cron_runner.sh midday
+bash scripts/cron_runner.sh daily-summary
+bash scripts/cron_runner.sh weekly-review
+```
+
+The runner refuses automated execution unless `TRADING_MODE=paper`, the Alpaca endpoint is the paper endpoint, and `ALLOW_LIVE_TRADING` is not enabled. Mutating Alpaca commands are still blocked while `DRY_RUN=true`.
+
 ## Suggested Hermes Cron Mapping
 
 Set `workdir=/home/matt/workspace/codex-trading-bot` and schedule weekdays:

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .memory import MemoryStore, initialize_memory
 from .rules import AccountState, Position, TradeIdea, should_cut_loss, trailing_stop_percent_for_position, validate_buy_gate
+from .sanitize import account_summary, positions_summary
 from .wrappers import run_script
 
 
@@ -98,12 +99,12 @@ def cmd_daily_summary(args: argparse.Namespace) -> int:
 
 ### Account
 ```json
-{acct.stdout.strip() if acct.ok else acct.stderr.strip()}
+{account_summary(acct.stdout) if acct.ok else acct.stderr.strip()}
 ```
 
 ### Positions
 ```json
-{positions.stdout.strip() if positions.ok else positions.stderr.strip()}
+{positions_summary(positions.stdout) if positions.ok else positions.stderr.strip()}
 ```
 """
     store.append("TRADE-LOG.md", entry)
