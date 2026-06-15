@@ -1,6 +1,6 @@
 # Codex Trader — Hermes/Codex Edition
 
-A safe, repo-backed swing-trading agent scaffold adapted from the uploaded Codex guide.
+A safe, repo-backed swing-trading agent scaffold. Mission: beat the S&P 500 / SPX benchmark over the challenge window using Alpaca paper trading; use SPY as the practical benchmark proxy when needed.
 
 **Key adaptations:**
 - **Hermes cron jobs** replace Claude cloud routines.
@@ -81,7 +81,8 @@ The runner refuses automated execution unless `TRADING_MODE=paper`, the Alpaca e
 Automated research now uses two layers:
 
 1. **Top-volume universe** from Yahoo Finance/yfinance `most_actives`, ranked by latest volume and scored by relative volume, 1D momentum, and 5D momentum.
-2. **TradingView MCP overlay** in the Hermes pre-market cron agent, used to cross-check top gainers, volume breakouts, Bollinger/rating signals, and technical context before writing final research notes.
+2. **TradingView MCP overlay** from [`atilaahmettaner/tradingview-mcp`](https://github.com/atilaahmettaner/tradingview-mcp) through Hermes MCP tools. Use it as the primary technical research layer: top gainers/losers, volume breakouts, Bollinger/rating filters, combined analysis, multi-timeframe analysis, backtest/walk-forward checks where practical, news, and sentiment.
+3. **Benchmark context** from SPY/SPX. Candidate ideas should explain why they may beat SPY over the swing window; otherwise default to HOLD.
 
 The market-open step submits Alpaca **paper** broker orders only when `PAPER_ORDER_SUBMISSION=true` and the runner has switched `DRY_RUN=false` for the market-open workflow. It buys approved candidates and immediately attempts a 10% GTC trailing stop. Other workflows force `DRY_RUN=true`.
 
