@@ -60,3 +60,16 @@
 - Catalyst: Top-volume momentum candidate: volume 44,043,524 vs avg 38,254,302; 1D 11.17%, 5D 0.80%.
 - Gate reasons: none
 - Broker action: none; DRY_RUN intent only.
+
+
+## EOD Snapshot — 2026-06-15
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "200000", "cash": "50000", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "200000", "equity": "50000", "long_market_value": "0", "pattern_day_trader": false, "portfolio_value": "50000", "position_market_value": "0", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[]
+```
