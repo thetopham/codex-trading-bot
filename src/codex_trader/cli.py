@@ -7,6 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from .memory import MemoryStore, initialize_memory
+from .research import render_research_markdown, top_volume_candidates
 from .rules import AccountState, Position, TradeIdea, should_cut_loss, trailing_stop_percent_for_position, validate_buy_gate
 from .sanitize import account_summary, positions_summary
 from .wrappers import run_script
@@ -88,6 +89,59 @@ def cmd_midday_scan(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pre_market(args: argparse.Namespace) -> int:
+    root = _root()
+    store = MemoryStore(root)
+    top, selected = top_volume_candidates(limit=args.limit, picks=args.picks)
+    markdown = render_research_markdown(top, selected)
+    store.append("RESEARCH-LOG.md", markdown)
+    symbols = ", ".join(c.symbol for c in selected) if selected else "none"
+    message = f"Codex pre-market research: top-volume scan complete; candidates: {symbols}."
+    run_script(root, "telegram.sh", message)
+    print(message)
+    return 0
+
+
+def cmd_market_open_intents(args: argparse.Namespace) -> int:
+    root = _root()
+    store = MemoryStore(root)
+    acct_result = run_script(root, "alpaca.sh", "account")
+    pos_result = run_script(root, "alpaca.sh", "positions")
+    if not acct_result.ok or not pos_result.ok:
+        print(acct_result.stderr or acct_result.stdout)
+        print(pos_result.stderr or pos_result.stdout)
+        return 2
+    account = AccountState.from_api(json.loads(acct_result.stdout))
+    positions = [Position.from_api(p) for p in json.loads(pos_result.stdout or "[]")]
+    _top, selected = top_volume_candidates(limit=args.limit, picks=args.picks)
+    trade_log_text = store.read("TRADE-LOG.md")
+    lines = [f"\n## Market-open Dry-run Intents — {date.today().isoformat()}", ""]
+    approved = []
+    for c in selected:
+        idea = TradeIdea(symbol=c.symbol, qty=Decimal(c.suggested_qty), estimated_price=c.last_price, catalyst=c.catalyst, sector=c.sector)
+        gate = validate_buy_gate(account=account, positions=positions, idea=idea, trade_log_text=trade_log_text)
+        status = "APPROVED_DRY_RUN" if gate.approved else "SKIPPED"
+        if gate.approved:
+            approved.append(c.symbol)
+        lines += [
+            f"### {c.symbol} — {status}",
+            f"- Qty: {c.suggested_qty}",
+            f"- Reference price: {c.last_price}",
+            f"- Estimated cost: {idea.estimated_cost}",
+            f"- Stop: {c.stop}",
+            f"- Target: {c.target}",
+            f"- Catalyst: {c.catalyst}",
+            f"- Gate reasons: {', '.join(gate.reasons) if gate.reasons else 'none'}",
+            "- Broker action: none; DRY_RUN intent only.",
+            "",
+        ]
+    store.append("TRADE-LOG.md", "\n".join(lines))
+    message = f"Codex market-open dry-run intents: approved={', '.join(approved) if approved else 'none'}; no broker orders submitted."
+    run_script(root, "telegram.sh", message)
+    print(message)
+    return 0
+
+
 def cmd_daily_summary(args: argparse.Namespace) -> int:
     root = _root()
     store = MemoryStore(root)
@@ -140,6 +194,16 @@ def build_parser() -> argparse.ArgumentParser:
     midday = sub.add_parser("midday-scan")
     midday.add_argument("--dry-run", action="store_true", default=True)
     midday.set_defaults(func=cmd_midday_scan)
+
+    pre = sub.add_parser("pre-market-research")
+    pre.add_argument("--limit", type=int, default=100)
+    pre.add_argument("--picks", type=int, default=5)
+    pre.set_defaults(func=cmd_pre_market)
+
+    intents = sub.add_parser("market-open-intents")
+    intents.add_argument("--limit", type=int, default=100)
+    intents.add_argument("--picks", type=int, default=3)
+    intents.set_defaults(func=cmd_market_open_intents)
 
     daily = sub.add_parser("daily-summary")
     daily.set_defaults(func=cmd_daily_summary)

@@ -20,7 +20,7 @@ Open these before action:
 - Cut losers at -7%.
 - Tighten trailing stop to 7% at +15%, 5% at +20%.
 - Telegram notifications only: no ClickUp.
-- Use `scripts/alpaca.sh`, `scripts/perplexity.sh`, and `scripts/telegram.sh`; do not call broker/notification APIs directly.
+- Use `scripts/alpaca.sh`, `codex-trader pre-market-research`, and `scripts/telegram.sh`; do not call broker/notification APIs directly.
 
 ## Codex/Hermes Workflow
 - Hermes cron jobs can schedule the routines in `routines/` with `workdir` set to this repo.

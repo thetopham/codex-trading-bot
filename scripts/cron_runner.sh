@@ -46,14 +46,10 @@ case "$workflow" in
     codex-trader portfolio
     ;;
   pre-market)
-    codex-trader portfolio >/tmp/codex_pre_market_portfolio.out
-    echo "Codex Trader pre-market ${stamp}: account read succeeded; research automation scaffold active."
-    bash scripts/telegram.sh "Codex Trader pre-market check ${stamp}: account read succeeded; research automation scaffold active."
+    codex-trader pre-market-research --limit 100 --picks 5
     ;;
   market-open)
-    codex-trader check-trade SPY 1 1 --equity 50000 --cash 50000 --catalyst "cron gate smoke" >/tmp/codex_market_open_gate.json
-    echo "Codex Trader market-open gate ${stamp}: dry-run gate checked; no order submission in v1."
-    bash scripts/telegram.sh "Codex Trader market-open gate ${stamp}: dry-run gate checked; no order submission in v1."
+    codex-trader market-open-intents --limit 100 --picks 3
     ;;
   midday)
     codex-trader midday-scan | tee /tmp/codex_midday_scan.out

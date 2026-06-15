@@ -38,11 +38,12 @@ README.md
 pyproject.toml
 scripts/
   alpaca.sh               # Alpaca wrapper; dry-run guards mutating calls
-  perplexity.sh           # optional cited research wrapper
+  perplexity.sh           # legacy optional wrapper; automation uses yfinance instead
+
   telegram.sh             # Telegram notification wrapper with local fallback
 src/codex_trader/
   cli.py                  # CLI commands
-  rules.py                # strategy hard gates
+  research.py             # top-volume Yahoo Finance scanner and candidate renderer
   memory.py               # markdown memory helpers
 memory/                   # git-backed agent memory
 routines/                 # Hermes cron prompt templates
@@ -52,6 +53,8 @@ routines/                 # Hermes cron prompt templates
 ## Core CLI
 
 ```bash
+codex-trader pre-market-research     # rank top-volume universe and write research log
+codex-trader market-open-intents     # create dry-run intents from top-volume candidates
 codex-trader portfolio              # account/positions/orders via Alpaca wrapper
 codex-trader check-trade ...         # deterministic buy-side gate check
 codex-trader midday-scan             # dry-run action scan from positions
@@ -72,6 +75,15 @@ bash scripts/cron_runner.sh weekly-review
 ```
 
 The runner refuses automated execution unless `TRADING_MODE=paper`, the Alpaca endpoint is the paper endpoint, and `ALLOW_LIVE_TRADING` is not enabled. Mutating Alpaca commands are still blocked while `DRY_RUN=true`.
+
+## Research Inputs
+
+Automated research now uses two layers:
+
+1. **Top-volume universe** from Yahoo Finance/yfinance `most_actives`, ranked by latest volume and scored by relative volume, 1D momentum, and 5D momentum.
+2. **TradingView MCP overlay** in the Hermes pre-market cron agent, used to cross-check top gainers, volume breakouts, Bollinger/rating signals, and technical context before writing final research notes.
+
+The market-open step remains dry-run: it converts selected candidates into order intents and runs deterministic risk gates, but submits no broker orders.
 
 ## Suggested Hermes Cron Mapping
 
