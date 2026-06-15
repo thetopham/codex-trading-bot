@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 from typing import Any, Iterable
 
@@ -66,8 +67,25 @@ class GateResult:
 
 
 def _weekly_trade_count(trade_log_text: str) -> int:
-    # Conservative marker count: generated trade entries include "New trade:".
-    return trade_log_text.count("New trade:")
+    # Count only submitted paper/new trade markers for the current ISO week.
+    current_year, current_week, _ = date.today().isocalendar()
+    count = 0
+    current_heading_date: date | None = None
+    for line in trade_log_text.splitlines():
+        if line.startswith("## ") and "—" in line:
+            maybe_date = line.rsplit("—", 1)[-1].strip()
+            try:
+                current_heading_date = date.fromisoformat(maybe_date)
+            except ValueError:
+                current_heading_date = None
+        if "Broker action: paper_submit buy_ok=True" in line or line.startswith("New trade:"):
+            if current_heading_date is None:
+                count += 1
+                continue
+            year, week, _ = current_heading_date.isocalendar()
+            if year == current_year and week == current_week:
+                count += 1
+    return count
 
 
 def validate_buy_gate(

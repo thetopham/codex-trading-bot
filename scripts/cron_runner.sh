@@ -11,11 +11,21 @@ if [[ -f .env ]]; then
 fi
 
 export TRADING_MODE="${TRADING_MODE:-paper}"
+workflow="${1:?usage: scripts/cron_runner.sh <pre-market|market-open|midday|daily-summary|weekly-review|smoke>}"
+stamp="$(date +%Y-%m-%d)"
 export DRY_RUN="${DRY_RUN:-true}"
 
 if [[ "$TRADING_MODE" != "paper" ]]; then
   echo "Refusing cron run: TRADING_MODE must be paper for automated v1 routines" >&2
   exit 5
+fi
+
+if [[ "$workflow" == "market-open" ]]; then
+  if [[ "${PAPER_ORDER_SUBMISSION:-false}" == "true" ]]; then
+    export DRY_RUN="false"
+  fi
+else
+  export DRY_RUN="true"
 fi
 
 if [[ "${ALLOW_LIVE_TRADING:-false}" == "true" ]]; then
@@ -36,9 +46,6 @@ fi
 # Ensure console script points at the current checkout after renames or host moves.
 . .venv/bin/activate
 python -m pip show codex-trading-bot >/dev/null 2>&1 || uv pip install -q -e '.[test]'
-
-workflow="${1:?usage: scripts/cron_runner.sh <pre-market|market-open|midday|daily-summary|weekly-review|smoke>}"
-stamp="$(date +%Y-%m-%d)"
 
 case "$workflow" in
   smoke)

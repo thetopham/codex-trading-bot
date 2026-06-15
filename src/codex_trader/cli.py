@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
+from .broker import paper_submission_enabled, submit_market_buy_with_trailing_stop
 from .memory import MemoryStore, initialize_memory
 from .research import render_research_markdown, top_volume_candidates
 from .rules import AccountState, Position, TradeIdea, should_cut_loss, trailing_stop_percent_for_position, validate_buy_gate
@@ -117,12 +118,21 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
     trade_log_text = store.read("TRADE-LOG.md")
     lines = [f"\n## Market-open Dry-run Intents — {date.today().isoformat()}", ""]
     approved = []
+    submitted = []
+    submit_enabled = paper_submission_enabled()
+    max_submit = args.max_submit
     for c in selected:
         idea = TradeIdea(symbol=c.symbol, qty=Decimal(c.suggested_qty), estimated_price=c.last_price, catalyst=c.catalyst, sector=c.sector)
         gate = validate_buy_gate(account=account, positions=positions, idea=idea, trade_log_text=trade_log_text)
         status = "APPROVED_DRY_RUN" if gate.approved else "SKIPPED"
         if gate.approved:
             approved.append(c.symbol)
+        broker_action = "none; DRY_RUN intent only"
+        if gate.approved and submit_enabled and len(submitted) < max_submit:
+            result = submit_market_buy_with_trailing_stop(root, symbol=c.symbol, qty=c.suggested_qty)
+            if result.buy_ok:
+                submitted.append(c.symbol)
+            broker_action = f"paper_submit buy_ok={result.buy_ok} trailing_stop_ok={result.stop_ok} qty={result.qty}"
         lines += [
             f"### {c.symbol} — {status}",
             f"- Qty: {c.suggested_qty}",
@@ -132,11 +142,12 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
             f"- Target: {c.target}",
             f"- Catalyst: {c.catalyst}",
             f"- Gate reasons: {', '.join(gate.reasons) if gate.reasons else 'none'}",
-            "- Broker action: none; DRY_RUN intent only.",
+            f"- Broker action: {broker_action}.",
             "",
         ]
     store.append("TRADE-LOG.md", "\n".join(lines))
-    message = f"Codex market-open dry-run intents: approved={', '.join(approved) if approved else 'none'}; no broker orders submitted."
+    mode = "paper orders submitted" if submitted else "dry-run/no submissions"
+    message = f"Codex market-open: approved={', '.join(approved) if approved else 'none'}; submitted={', '.join(submitted) if submitted else 'none'}; mode={mode}."
     run_script(root, "telegram.sh", message)
     print(message)
     return 0
@@ -203,6 +214,7 @@ def build_parser() -> argparse.ArgumentParser:
     intents = sub.add_parser("market-open-intents")
     intents.add_argument("--limit", type=int, default=100)
     intents.add_argument("--picks", type=int, default=3)
+    intents.add_argument("--max-submit", type=int, default=3)
     intents.set_defaults(func=cmd_market_open_intents)
 
     daily = sub.add_parser("daily-summary")

@@ -37,6 +37,10 @@ refuse_if_dry_run() {
     echo "DRY_RUN=true: refusing mutating broker command" >&2
     exit 4
   fi
+  if is_paper_endpoint && [[ "${PAPER_ORDER_SUBMISSION:-false}" != "true" ]]; then
+    echo "PAPER_ORDER_SUBMISSION is not true: refusing paper broker mutation" >&2
+    exit 4
+  fi
 }
 
 assert_safe_broker_boundary

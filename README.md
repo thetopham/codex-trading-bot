@@ -83,7 +83,7 @@ Automated research now uses two layers:
 1. **Top-volume universe** from Yahoo Finance/yfinance `most_actives`, ranked by latest volume and scored by relative volume, 1D momentum, and 5D momentum.
 2. **TradingView MCP overlay** in the Hermes pre-market cron agent, used to cross-check top gainers, volume breakouts, Bollinger/rating signals, and technical context before writing final research notes.
 
-The market-open step remains dry-run: it converts selected candidates into order intents and runs deterministic risk gates, but submits no broker orders.
+The market-open step submits Alpaca **paper** broker orders only when `PAPER_ORDER_SUBMISSION=true` and the runner has switched `DRY_RUN=false` for the market-open workflow. It buys approved candidates and immediately attempts a 10% GTC trailing stop. Other workflows force `DRY_RUN=true`.
 
 ## Suggested Hermes Cron Mapping
 
