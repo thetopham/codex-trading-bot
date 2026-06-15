@@ -1,6 +1,15 @@
 from decimal import Decimal
 
-from codex_trader.rules import AccountState, Position, TradeIdea, should_cut_loss, trailing_stop_percent_for_position, validate_buy_gate
+from codex_trader.rules import (
+    AccountState,
+    Position,
+    TradeIdea,
+    max_position_notional_for_risk,
+    quantity_for_portfolio_risk,
+    should_cut_loss,
+    trailing_stop_percent_for_position,
+    validate_buy_gate,
+)
 
 
 def account(equity="10000", cash="10000", daytrade_count=0):
@@ -39,11 +48,36 @@ def test_buy_gate_enforces_position_cash_weekly_and_pdt_caps():
     for reason in [
         "too_many_open_positions_after_fill",
         "weekly_trade_cap_exceeded",
-        "position_cost_exceeds_20pct_equity",
+        "position_risk_exceeds_1pct_portfolio_at_10pct_stop",
         "insufficient_cash",
         "pdt_daytrade_count_full",
     ]:
         assert reason in result.reasons
+
+
+def test_risk_sizing_limits_10pct_stop_to_1pct_of_portfolio():
+    acct = account(equity="50000", cash="50000")
+    assert max_position_notional_for_risk(acct) == Decimal("5000")
+    assert quantity_for_portfolio_risk(acct, price=Decimal("192.50")) == Decimal("25")
+
+    idea = TradeIdea(symbol="SPCX", qty=Decimal("25"), estimated_price=Decimal("192.50"), catalyst="top volume")
+    assert idea.estimated_cost == Decimal("4812.50")
+    assert idea.estimated_stop_loss == Decimal("481.2500")
+    assert idea.estimated_stop_loss <= acct.equity * Decimal("0.01")
+
+
+def test_buy_gate_rejects_position_whose_10pct_stop_exceeds_1pct_portfolio():
+    idea = TradeIdea(symbol="SPCX", qty=Decimal("26"), estimated_price=Decimal("192.50"), catalyst="top volume")
+    result = validate_buy_gate(account=account(equity="50000", cash="50000"), positions=[], idea=idea)
+    assert not result.approved
+    assert "position_risk_exceeds_1pct_portfolio_at_10pct_stop" in result.reasons
+
+
+def test_buy_gate_rejects_zero_quantity():
+    idea = TradeIdea(symbol="BRK.A", qty=Decimal("0"), estimated_price=Decimal("600000"), catalyst="top volume")
+    result = validate_buy_gate(account=account(equity="50000", cash="50000"), positions=[], idea=idea)
+    assert not result.approved
+    assert "invalid_quantity" in result.reasons
 
 
 def test_midday_loss_and_trailing_rules():

@@ -21,5 +21,5 @@ Write `memory/RESEARCH-LOG.md` with:
 - source summary: yfinance top-volume + TradingView MCP overlay
 - SPY/SPX benchmark context
 - market/technical context
-- 2-5 candidate trade ideas with ticker, catalyst/technical reason, entry reference, 7% stop, approx 2:1 target, risks, and HOLD/candidate decision
-- explicit note that market-open must revalidate deterministic gates before paper order submission.
+- 2-5 candidate trade ideas with ticker, catalyst/technical reason, entry reference, 10% trailing-stop discipline, approx 2:1 target, risks, and HOLD/candidate decision
+- explicit note that market-open must size from live equity so the 10% stop risks at most ~1% of portfolio equity, then revalidate deterministic gates before paper order submission.

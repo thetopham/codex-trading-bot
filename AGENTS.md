@@ -14,7 +14,8 @@ Open these before action:
 - Goal: beat SPX/SPY over the challenge window without violating hard risk gates.
 - Stocks only. No options.
 - Max 6 open positions.
-- Max 20% of equity per position.
+- Max per-position risk: 1% of portfolio equity at the required 10% stop.
+- Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`, so a 10% stop can lose at most ~1% of portfolio equity before slippage.
 - Max 3 new trades per week.
 - Never trade without a documented catalyst in today's research log.
 - New positions require a 10% trailing stop in paper/live-approved modes.

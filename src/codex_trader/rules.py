@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from typing import Any, Iterable
 
 
@@ -54,10 +54,44 @@ class TradeIdea:
     catalyst: str
     instrument_class: str = "stock"
     sector: str | None = None
+    stop_loss_pct: Decimal = Decimal("0.10")
 
     @property
     def estimated_cost(self) -> Decimal:
         return self.qty * self.estimated_price
+
+    @property
+    def estimated_stop_loss(self) -> Decimal:
+        return self.estimated_cost * self.stop_loss_pct
+
+
+def max_position_notional_for_risk(
+    account: AccountState,
+    *,
+    max_portfolio_risk_pct: Decimal = Decimal("0.01"),
+    stop_loss_pct: Decimal = Decimal("0.10"),
+) -> Decimal:
+    if account.equity <= 0 or stop_loss_pct <= 0:
+        return Decimal("0")
+    return account.equity * max_portfolio_risk_pct / stop_loss_pct
+
+
+def quantity_for_portfolio_risk(
+    account: AccountState,
+    *,
+    price: Decimal,
+    max_portfolio_risk_pct: Decimal = Decimal("0.01"),
+    stop_loss_pct: Decimal = Decimal("0.10"),
+) -> Decimal:
+    if price <= 0:
+        return Decimal("0")
+    notional = max_position_notional_for_risk(
+        account,
+        max_portfolio_risk_pct=max_portfolio_risk_pct,
+        stop_loss_pct=stop_loss_pct,
+    )
+    qty = (notional / price).to_integral_value(rounding=ROUND_DOWN)
+    return max(Decimal("0"), qty)
 
 
 @dataclass(frozen=True)
@@ -96,12 +130,15 @@ def validate_buy_gate(
     trade_log_text: str = "",
     max_positions: int = 6,
     max_trades_per_week: int = 3,
-    max_position_equity_pct: Decimal = Decimal("0.20"),
+    max_portfolio_risk_pct: Decimal = Decimal("0.01"),
+    stop_loss_pct: Decimal = Decimal("0.10"),
     max_daytrade_count_under_25k: int = 3,
 ) -> GateResult:
     reasons: list[str] = []
     current_positions = list(positions)
 
+    if idea.qty <= 0:
+        reasons.append("invalid_quantity")
     if idea.instrument_class.lower() != "stock":
         reasons.append("instrument_not_stock")
     if not idea.catalyst.strip():
@@ -113,9 +150,13 @@ def validate_buy_gate(
     if account.equity <= 0:
         reasons.append("invalid_equity")
     else:
-        max_cost = account.equity * max_position_equity_pct
+        max_cost = max_position_notional_for_risk(
+            account,
+            max_portfolio_risk_pct=max_portfolio_risk_pct,
+            stop_loss_pct=stop_loss_pct,
+        )
         if idea.estimated_cost > max_cost:
-            reasons.append("position_cost_exceeds_20pct_equity")
+            reasons.append("position_risk_exceeds_1pct_portfolio_at_10pct_stop")
     if idea.estimated_cost > account.cash:
         reasons.append("insufficient_cash")
     if account.equity < Decimal("25000") and account.daytrade_count >= max_daytrade_count_under_25k:

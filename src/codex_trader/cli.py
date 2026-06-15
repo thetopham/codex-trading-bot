@@ -9,7 +9,15 @@ from pathlib import Path
 from .broker import paper_submission_enabled, submit_market_buy_with_trailing_stop
 from .memory import MemoryStore, initialize_memory
 from .research import render_research_markdown, top_volume_candidates
-from .rules import AccountState, Position, TradeIdea, should_cut_loss, trailing_stop_percent_for_position, validate_buy_gate
+from .rules import (
+    AccountState,
+    Position,
+    TradeIdea,
+    quantity_for_portfolio_risk,
+    should_cut_loss,
+    trailing_stop_percent_for_position,
+    validate_buy_gate,
+)
 from .sanitize import account_summary, positions_summary
 from .wrappers import run_script
 
@@ -122,23 +130,25 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
     submit_enabled = paper_submission_enabled()
     max_submit = args.max_submit
     for c in selected:
-        idea = TradeIdea(symbol=c.symbol, qty=Decimal(c.suggested_qty), estimated_price=c.last_price, catalyst=c.catalyst, sector=c.sector)
+        qty = quantity_for_portfolio_risk(account, price=c.last_price)
+        idea = TradeIdea(symbol=c.symbol, qty=qty, estimated_price=c.last_price, catalyst=c.catalyst, sector=c.sector)
         gate = validate_buy_gate(account=account, positions=positions, idea=idea, trade_log_text=trade_log_text)
         status = "APPROVED_DRY_RUN" if gate.approved else "SKIPPED"
         if gate.approved:
             approved.append(c.symbol)
         broker_action = "none; DRY_RUN intent only"
         if gate.approved and submit_enabled and len(submitted) < max_submit:
-            result = submit_market_buy_with_trailing_stop(root, symbol=c.symbol, qty=c.suggested_qty)
+            result = submit_market_buy_with_trailing_stop(root, symbol=c.symbol, qty=int(qty))
             if result.buy_ok:
                 submitted.append(c.symbol)
             broker_action = f"paper_submit buy_ok={result.buy_ok} trailing_stop_ok={result.stop_ok} qty={result.qty}"
         lines += [
             f"### {c.symbol} — {status}",
-            f"- Qty: {c.suggested_qty}",
+            f"- Qty: {qty}",
             f"- Reference price: {c.last_price}",
             f"- Estimated cost: {idea.estimated_cost}",
-            f"- Stop: {c.stop}",
+            f"- Risk at 10% stop: {idea.estimated_stop_loss}",
+            f"- Stop: 10% trailing stop; paper order uses trail_percent=10",
             f"- Target: {c.target}",
             f"- Catalyst: {c.catalyst}",
             f"- Gate reasons: {', '.join(gate.reasons) if gate.reasons else 'none'}",

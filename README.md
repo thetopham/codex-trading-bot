@@ -84,7 +84,7 @@ Automated research now uses two layers:
 2. **TradingView MCP overlay** from [`atilaahmettaner/tradingview-mcp`](https://github.com/atilaahmettaner/tradingview-mcp) through Hermes MCP tools. Use it as the primary technical research layer: top gainers/losers, volume breakouts, Bollinger/rating filters, combined analysis, multi-timeframe analysis, backtest/walk-forward checks where practical, news, and sentiment.
 3. **Benchmark context** from SPY/SPX. Candidate ideas should explain why they may beat SPY over the swing window; otherwise default to HOLD.
 
-The market-open step submits Alpaca **paper** broker orders only when `PAPER_ORDER_SUBMISSION=true` and the runner has switched `DRY_RUN=false` for the market-open workflow. It buys approved candidates and immediately attempts a 10% GTC trailing stop. Other workflows force `DRY_RUN=true`.
+The market-open step submits Alpaca **paper** broker orders only when `PAPER_ORDER_SUBMISSION=true` and the runner has switched `DRY_RUN=false` for the market-open workflow. It sizes each approved candidate so the required 10% trailing stop risks at most 1% of current portfolio equity: `qty = floor((equity * 0.01 / 0.10) / reference_price)`. It then buys approved candidates and immediately attempts a 10% GTC trailing stop. Other workflows force `DRY_RUN=true`.
 
 ## Suggested Hermes Cron Mapping
 

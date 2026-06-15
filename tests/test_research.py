@@ -19,6 +19,6 @@ def test_render_research_markdown_contains_top_volume_and_candidate_fields():
     assert "Pre-market Research — 2026-01-02" in md
     assert "Yahoo Finance" in md
     assert "| 1 | NVDA" in md
-    assert "Suggested dry-run qty: 20" in md
-    assert "Stop: 93.00" in md
-    assert "Target: 114.00" in md
+    assert "Sizing note: market-open computes qty from live equity" in md
+    assert "Reference stop discipline: 10% trailing stop" in md
+    assert "Reference target: 120.00" in md

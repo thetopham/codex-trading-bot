@@ -18,7 +18,8 @@ Safety boundary: Alpaca paper only unless explicitly changed later. Stocks only;
 
 ## Hard Rules
 - Max 6 open positions.
-- Max 20% of equity per position.
+- Max per-position risk: 1% of portfolio equity at the required 10% stop.
+- Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`, so a 10% stop risks at most ~1% of portfolio equity before slippage.
 - Max 3 new trades per week.
 - Every new position requires a documented catalyst or technical reason in today's research log.
 - Every new position gets a 10% GTC trailing stop in paper/live-approved modes.
