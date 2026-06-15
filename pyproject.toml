@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "codex-trading-bot"
+version = "0.1.0"
+description = "Replay-first/dry-run Alpaca swing trading agent scaffold with Telegram notifications"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Tiamat Digital" }]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+codex-trader = "codex_trader.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/codex_trader"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
