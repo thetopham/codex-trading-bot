@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, ROUND_DOWN
@@ -16,8 +17,9 @@ TOP_VOLUME_UNIVERSE = [
     "V", "MA", "PYPL", "SQ", "AFRM", "WMT", "COST", "TGT", "HD", "LOW",
     "UNH", "LLY", "MRK", "ABBV", "JNJ", "BMY", "GILD", "AMGN", "BA", "CAT",
     "DE", "GE", "GM", "ORCL", "CRM", "ADBE", "NOW", "PANW", "CRWD", "DDOG",
-    "SPY", "QQQ", "IWM", "DIA", "XLF", "XLK", "XLE", "XLV", "XLI", "XLY",
 ]
+
+DEFAULT_FORCED_WATCHLIST = ["SPCX"]
 
 SECTOR_ETFS = {
     "XLK": "technology",
@@ -69,12 +71,12 @@ class Candidate:
 
     @property
     def stop(self) -> Decimal:
-        return (self.last_price * Decimal("0.93")).quantize(Decimal("0.01"))
+        return (self.last_price * Decimal("0.90")).quantize(Decimal("0.01"))
 
     @property
     def target(self) -> Decimal:
-        # 2:1 against the 7% risk stop.
-        return (self.last_price * Decimal("1.14")).quantize(Decimal("0.01"))
+        # 2:1 against the required 10% trailing-stop discipline.
+        return (self.last_price * Decimal("1.20")).quantize(Decimal("0.01"))
 
     @property
     def catalyst(self) -> str:
@@ -98,12 +100,33 @@ def _download_market_data(symbols: list[str], period: str = "10d"):
     return yf.download(symbols, period=period, interval="1d", group_by="ticker", auto_adjust=False, progress=False, threads=True)
 
 
+def _forced_watchlist_symbols() -> list[str]:
+    raw = os.environ.get("FORCED_WATCHLIST", ",".join(DEFAULT_FORCED_WATCHLIST))
+    symbols: list[str] = []
+    for part in raw.split(","):
+        symbol = part.upper().strip()
+        if symbol and symbol not in symbols:
+            symbols.append(symbol)
+    return symbols
+
+
+def _unique_symbols(symbols: Iterable[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for symbol in symbols:
+        clean = symbol.upper().strip()
+        if clean and clean not in seen:
+            seen.add(clean)
+            out.append(clean)
+    return out
+
+
 def most_active_symbols(limit: int = 100) -> list[str]:
     import yfinance as yf
     try:
         result = yf.screen("most_actives", count=limit)
     except Exception:
-        return TOP_VOLUME_UNIVERSE[:limit]
+        return _unique_symbols(TOP_VOLUME_UNIVERSE + _forced_watchlist_symbols())
     symbols = []
     for quote in result.get("quotes", []):
         if quote.get("quoteType") != "EQUITY":
@@ -112,7 +135,7 @@ def most_active_symbols(limit: int = 100) -> list[str]:
         # Keep US common-stock style symbols only; avoid warrants/classes/options noise.
         if symbol and symbol.replace("-", "").replace(".", "").isalnum():
             symbols.append(symbol)
-    return symbols[:limit] or TOP_VOLUME_UNIVERSE[:limit]
+    return _unique_symbols((symbols or TOP_VOLUME_UNIVERSE) + _forced_watchlist_symbols())
 
 
 def _extract_rows(data, symbols: Iterable[str]) -> list[Candidate]:
@@ -159,6 +182,26 @@ def top_volume_candidates(limit: int = 100, picks: int = 5) -> tuple[list[Candid
     pool = positive if positive else top_by_volume
     selected = sorted(pool, key=lambda r: r.score, reverse=True)[:picks]
     return top_by_volume, selected
+
+
+def render_liquidity_filter_markdown(top_by_volume: list[Candidate], today: date | None = None) -> str:
+    today = today or date.today()
+    lines = [
+        f"\n## Liquidity Filter — {today.isoformat()}",
+        "",
+        "Top-volume stocks are a liquidity filter only. Final trade candidates must come from TradingView MCP screening and be written to `memory/PREMARKET-CANDIDATES.json`.",
+        "",
+        "| Rank | Symbol | Last | Volume | Avg Vol | 1D % | 5D % | Score | Sector |",
+        "|---:|---|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for i, c in enumerate(top_by_volume, 1):
+        lines.append(f"| {i} | {c.symbol} | {c.last_price} | {c.volume} | {c.avg_volume} | {c.day_change_pct} | {c.five_day_change_pct} | {c.score} | {c.sector} |")
+    lines += [
+        "",
+        "Decision rule: HOLD unless TradingView MCP scanners confirm a liquid setup with a documented catalyst and market-open risk gates pass.",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def render_research_markdown(top_by_volume: list[Candidate], selected: list[Candidate], today: date | None = None) -> str:

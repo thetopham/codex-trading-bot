@@ -53,8 +53,8 @@ routines/                 # Hermes cron prompt templates
 ## Core CLI
 
 ```bash
-codex-trader pre-market-research     # rank top-volume universe and write research log
-codex-trader market-open-intents     # create dry-run intents from top-volume candidates
+codex-trader pre-market-research     # refresh top-volume liquidity filter for MCP screening
+codex-trader market-open-intents     # use today's TradingView MCP candidates + liquidity/risk gates
 codex-trader portfolio              # account/positions/orders via Alpaca wrapper
 codex-trader check-trade ...         # deterministic buy-side gate check
 codex-trader midday-scan             # dry-run action scan from positions
@@ -80,9 +80,10 @@ The runner refuses automated execution unless `TRADING_MODE=paper`, the Alpaca e
 
 Automated research now uses two layers:
 
-1. **Top-volume universe** from Yahoo Finance/yfinance `most_actives`, ranked by latest volume and scored by relative volume, 1D momentum, and 5D momentum.
-2. **TradingView MCP overlay** from [`atilaahmettaner/tradingview-mcp`](https://github.com/atilaahmettaner/tradingview-mcp) through Hermes MCP tools. Use it as the primary technical research layer: top gainers/losers, volume breakouts, Bollinger/rating filters, combined analysis, multi-timeframe analysis, backtest/walk-forward checks where practical, news, and sentiment.
-3. **Benchmark context** from SPY/SPX. Candidate ideas should explain why they may beat SPY over the swing window; otherwise default to HOLD.
+1. **Top-volume liquidity filter** from Yahoo Finance/yfinance `most_actives`, ranked by latest actual volume after direct OHLCV fetch. This is not the alpha engine; it is a liquidity guard so the bot trades only names with deep participation. Forced watchlist symbols such as `SPCX` are fetched directly and can enter the filter if actual volume qualifies.
+2. **TradingView MCP primary screener** from [`atilaahmettaner/tradingview-mcp`](https://github.com/atilaahmettaner/tradingview-mcp) through Hermes MCP tools. Use it as the alpha layer: top gainers/losers, volume breakouts, smart volume, Bollinger scans, rating filters, combined analysis, multi-timeframe analysis, backtest/walk-forward checks where practical, news, and sentiment.
+3. **Liquidity intersection**: pre-market writes final MCP-screened candidates to `memory/PREMARKET-CANDIDATES.json`; market-open rechecks that each candidate is still in the current top-100 volume filter before sizing or submitting.
+4. **Benchmark context** from SPY/SPX. Candidate ideas should explain why they may beat SPY over the swing window; otherwise default to HOLD.
 
 The market-open step submits Alpaca **paper** broker orders only when `PAPER_ORDER_SUBMISSION=true` and the runner has switched `DRY_RUN=false` for the market-open workflow. It sizes each approved candidate so the required 10% trailing stop risks at most 1% of current portfolio equity: `qty = floor((equity * 0.01 / 0.10) / reference_price)`. It then buys approved candidates and immediately attempts a 10% GTC trailing stop. Other workflows force `DRY_RUN=true`.
 

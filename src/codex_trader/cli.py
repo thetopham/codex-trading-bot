@@ -8,7 +8,8 @@ from pathlib import Path
 
 from .broker import paper_submission_enabled, submit_market_buy_with_trailing_stop
 from .memory import MemoryStore, initialize_memory
-from .research import render_research_markdown, top_volume_candidates
+from .premarket import CANDIDATES_FILE, filter_signals_by_liquidity, load_premarket_signals
+from .research import render_liquidity_filter_markdown, top_volume_candidates
 from .rules import (
     AccountState,
     Position,
@@ -101,11 +102,13 @@ def cmd_midday_scan(args: argparse.Namespace) -> int:
 def cmd_pre_market(args: argparse.Namespace) -> int:
     root = _root()
     store = MemoryStore(root)
-    top, selected = top_volume_candidates(limit=args.limit, picks=args.picks)
-    markdown = render_research_markdown(top, selected)
+    top, _legacy_selected = top_volume_candidates(limit=args.limit, picks=args.picks)
+    markdown = render_liquidity_filter_markdown(top)
     store.append("RESEARCH-LOG.md", markdown)
-    symbols = ", ".join(c.symbol for c in selected) if selected else "none"
-    message = f"Codex pre-market research: top-volume scan complete; candidates: {symbols}."
+    message = (
+        f"Codex pre-market liquidity filter: top-volume universe refreshed ({len(top)} symbols). "
+        f"TradingView MCP agent must write memory/{CANDIDATES_FILE} before market-open."
+    )
     run_script(root, "telegram.sh", message)
     print(message)
     return 0
@@ -122,16 +125,30 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
         return 2
     account = AccountState.from_api(json.loads(acct_result.stdout))
     positions = [Position.from_api(p) for p in json.loads(pos_result.stdout or "[]")]
-    _top, selected = top_volume_candidates(limit=args.limit, picks=args.picks)
+    top_by_volume, _legacy_selected = top_volume_candidates(limit=args.limit, picks=args.picks)
+    signals, signal_status = load_premarket_signals(root)
+    selected_pairs, liquidity_skips = filter_signals_by_liquidity(signals, top_by_volume, limit=args.picks)
     trade_log_text = store.read("TRADE-LOG.md")
-    lines = [f"\n## Market-open Dry-run Intents — {date.today().isoformat()}", ""]
+    lines = [f"\n## Market-open TradingView MCP Candidates — {date.today().isoformat()}", ""]
+    lines += [
+        f"- Candidate source: memory/{CANDIDATES_FILE}",
+        f"- Candidate file status: {signal_status}",
+        f"- Liquidity filter: current top {len(top_by_volume)} stocks by reported volume",
+        f"- Liquidity skips: {', '.join(liquidity_skips) if liquidity_skips else 'none'}",
+        "",
+    ]
     approved = []
     submitted = []
     submit_enabled = paper_submission_enabled()
     max_submit = args.max_submit
-    for c in selected:
+    if not selected_pairs:
+        lines += [
+            "No market-open candidates passed the TradingView MCP + top-volume liquidity intersection. No broker submissions attempted.",
+            "",
+        ]
+    for signal, c in selected_pairs:
         qty = quantity_for_portfolio_risk(account, price=c.last_price)
-        idea = TradeIdea(symbol=c.symbol, qty=qty, estimated_price=c.last_price, catalyst=c.catalyst, sector=c.sector)
+        idea = TradeIdea(symbol=c.symbol, qty=qty, estimated_price=c.last_price, catalyst=signal.catalyst, sector=c.sector)
         gate = validate_buy_gate(account=account, positions=positions, idea=idea, trade_log_text=trade_log_text)
         status = "APPROVED_DRY_RUN" if gate.approved else "SKIPPED"
         if gate.approved:
@@ -150,7 +167,10 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
             f"- Risk at 10% stop: {idea.estimated_stop_loss}",
             f"- Stop: 10% trailing stop; paper order uses trail_percent=10",
             f"- Target: {c.target}",
-            f"- Catalyst: {c.catalyst}",
+            f"- MCP score: {signal.mcp_score}",
+            f"- MCP sources: {', '.join(signal.sources) if signal.sources else 'unspecified'}",
+            f"- MCP notes: {signal.notes or 'none'}",
+            f"- Catalyst: {signal.catalyst}",
             f"- Gate reasons: {', '.join(gate.reasons) if gate.reasons else 'none'}",
             f"- Broker action: {broker_action}.",
             "",

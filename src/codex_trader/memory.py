@@ -10,6 +10,7 @@ ROOT_MEMORY_FILES = [
     "RESEARCH-LOG.md",
     "WEEKLY-REVIEW.md",
     "PROJECT-CONTEXT.md",
+    "PREMARKET-CANDIDATES.json",
 ]
 
 
@@ -42,7 +43,8 @@ def initialize_memory(root: Path) -> None:
         "TRADE-LOG.md": """# Trade Log\n\n## Day 0 Baseline\n- Equity: unknown\n- Cash: unknown\n- Note: seed this with a real paper account EOD snapshot before scheduled daily summaries.\n""",
         "RESEARCH-LOG.md": """# Research Log\n\nNo research yet. Pre-market workflow appends dated entries.\n""",
         "WEEKLY-REVIEW.md": """# Weekly Review\n\n## Template\n- Starting equity:\n- Ending equity:\n- Return:\n- Grade:\n- Lessons:\n""",
-        "PROJECT-CONTEXT.md": """# Project Context\n\nCodex-style AI trading agent adapted for Hermes/local operation. Uses Alpaca paper by default, optional Perplexity research, Telegram notifications, and git-backed markdown memory. Live trading is out of scope unless explicitly approved later.\n""",
+        "PROJECT-CONTEXT.md": """# Project Context\n\nCodex-style AI trading agent adapted for Hermes/local operation. Uses Alpaca paper by default, Yahoo/yfinance as the liquidity filter, TradingView MCP as the primary screener, Telegram notifications, and git-backed markdown memory. Live trading is out of scope unless explicitly approved later.\n""",
+        "PREMARKET-CANDIDATES.json": """{\n  \"date\": null,\n  \"source\": \"TradingView MCP screening over top-100-volume liquidity filter\",\n  \"candidates\": []\n}\n""",
     }
     for name, content in defaults.items():
         path = mem / name

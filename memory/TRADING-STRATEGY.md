@@ -11,9 +11,11 @@ Safety boundary: Alpaca paper only unless explicitly changed later. Stocks only;
 - Weekly review must note whether the bot is ahead/behind SPY and why.
 
 ## Research Stack
-- Primary universe: top 100 US equities by traded volume using Yahoo Finance/yfinance `most_actives`, plus forced watchlist symbols when needed.
-- Primary technical overlay: `atilaahmettaner/tradingview-mcp` via Hermes MCP tools.
-- Use TradingView MCP for top gainers/losers, volume breakouts, Bollinger/rating filters, combined analysis, multi-timeframe analysis, news/sentiment where useful, and SPY/SPX benchmark context.
+- Primary liquidity filter: top 100 US equities by traded volume using Yahoo Finance/yfinance `most_actives`, plus forced watchlist symbols when needed.
+- Top-volume is not the alpha engine; it only decides whether a name is liquid enough to consider.
+- Primary alpha/screening layer: `atilaahmettaner/tradingview-mcp` via Hermes MCP tools.
+- Use TradingView MCP for top gainers/losers, volume breakouts, smart volume, Bollinger/rating filters, combined analysis, multi-timeframe analysis, news/sentiment where useful, and SPY/SPX benchmark context.
+- Write final pre-market trade candidates to `memory/PREMARKET-CANDIDATES.json`; market-open must order only from that file after intersecting with the current top-volume liquidity filter.
 - Treat MCP outputs as research data, not automatic trade commands.
 
 ## Hard Rules
@@ -21,7 +23,7 @@ Safety boundary: Alpaca paper only unless explicitly changed later. Stocks only;
 - Max per-position risk: 1% of portfolio equity at the required 10% stop.
 - Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`, so a 10% stop risks at most ~1% of portfolio equity before slippage.
 - Max 3 new trades per week.
-- Every new position requires a documented catalyst or technical reason in today's research log.
+- Every new position requires a documented TradingView MCP-backed catalyst in today's `memory/PREMARKET-CANDIDATES.json`.
 - Every new position gets a 10% GTC trailing stop in paper/live-approved modes.
 - Cut losers at -7%.
 - Tighten trail to 7% at +15%, 5% at +20%.
