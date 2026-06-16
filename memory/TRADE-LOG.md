@@ -73,3 +73,12 @@
 ```json
 []
 ```
+
+## Market-open TradingView MCP Candidates — 2026-06-16
+
+- Candidate source: memory/PREMARKET-CANDIDATES.json
+- Candidate file status: no trade candidates in candidate file
+- Liquidity filter: current top 65 stocks by reported volume
+- Liquidity skips: none
+
+No market-open candidates passed the TradingView MCP + top-volume liquidity intersection. No broker submissions attempted.
