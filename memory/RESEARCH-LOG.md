@@ -574,3 +574,15 @@ Benchmark proxy context: SPY: 1D -0.36%, 5D -0.28%.
 | 100 | CAG | 13.60 | 11055452 | 15852285 | -0.07 | 8.11 | 0.28 | 8.39 | 5.87 | unknown |
 
 Decision rule: HOLD unless TradingView MCP scanners confirm a liquid setup with a documented catalyst, an explicit reason to beat SPY/SPX, and market-open risk gates pass.
+
+
+## Simplified MCP Candidate Selection — 2026-06-16 intraday rerun
+
+- Safety boundary: Alpaca paper only; pre-market research itself submitted no orders.
+- Liquidity universe refreshed with `scripts/cron_runner.sh pre-market`; top-volume count: 100; SPY proxy context: 1D -0.36%, 5D -0.28%.
+- MCP scans used as evidence, not multiple hard gates: `top_gainers` + `volume_breakout_scanner` on NASDAQ/NYSE.
+- Liquid MCP intersections found from broad scans: HIMS and LION.
+- Rejected/held: LION — very strong relative strength but extended near 52-week high with RSI ~78; keep as watch, not today's test trade.
+- Candidate written: HIMS — liquid top-volume name, TradingView MCP top-gainer setup, +5.30% relative 1D vs SPY and +15.37% relative 5D vs SPY.
+- Optional MCP multi-timeframe check returned API/data errors and a low-confidence HOLD, so it is logged as risk/context only under the simplified one-MCP-setup rule.
+- Market-open step must revalidate current liquidity, paper broker boundary, cash, PDT, and 1% portfolio-risk sizing before any paper order.
