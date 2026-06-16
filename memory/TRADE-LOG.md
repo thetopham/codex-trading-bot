@@ -138,3 +138,26 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Initial market-open trailing-stop submit returned `trailing_stop_ok=False`, likely because the buy fill/position was not yet visible when the stop was submitted.
 - Manual repair submitted a 10% GTC trailing stop for 157 HIMS shares.
 - Alpaca paper stop order: `a91d311a-20ff-455f-870e-87a19a28a917`, status `new`, HWM 31.73, stop_price 28.557.
+
+
+## EOD Snapshot — 2026-06-16
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "194017.67", "cash": "45018.39", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "194017.67", "equity": "49998.43", "long_market_value": "4980.04", "pattern_day_trader": false, "portfolio_value": "49998.43", "position_market_value": "4980.04", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[{"avg_entry_price": "31.73", "current_price": "31.72", "market_value": "4980.04", "qty": "157", "symbol": "HIMS", "unrealized_pl": "-1.57", "unrealized_plpc": "-0.00032"}]
+```
+
+### Benchmark
+- Benchmark: SPY close $752.17
+- Bot daily return: 0.00%
+- SPY daily return: 0.00%
+- Bot cumulative return: 0.00%
+- SPY cumulative return: 0.00%
+- Alpha vs SPY: 0.00%
+- Drawdown: 0.00%
+- Judgment: BASELINE: first benchmark row recorded; judge alpha after the next EOD snapshot.
