@@ -2,12 +2,25 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE="$ROOT/.env"
+# Preserve caller-provided safety overrides. The cron runner intentionally sets
+# DRY_RUN=false only for the market-open paper workflow; re-sourcing .env here
+# must not silently flip it back to DRY_RUN=true.
+CALLER_DRY_RUN="${DRY_RUN-}"
+CALLER_PAPER_ORDER_SUBMISSION="${PAPER_ORDER_SUBMISSION-}"
+CALLER_TRADING_MODE="${TRADING_MODE-}"
+CALLER_ALPACA_ENDPOINT="${ALPACA_ENDPOINT-}"
+CALLER_ALLOW_LIVE_TRADING="${ALLOW_LIVE_TRADING-}"
 if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
   source "$ENV_FILE"
   set +a
 fi
+[[ -n "$CALLER_DRY_RUN" ]] && export DRY_RUN="$CALLER_DRY_RUN"
+[[ -n "$CALLER_PAPER_ORDER_SUBMISSION" ]] && export PAPER_ORDER_SUBMISSION="$CALLER_PAPER_ORDER_SUBMISSION"
+[[ -n "$CALLER_TRADING_MODE" ]] && export TRADING_MODE="$CALLER_TRADING_MODE"
+[[ -n "$CALLER_ALPACA_ENDPOINT" ]] && export ALPACA_ENDPOINT="$CALLER_ALPACA_ENDPOINT"
+[[ -n "$CALLER_ALLOW_LIVE_TRADING" ]] && export ALLOW_LIVE_TRADING="$CALLER_ALLOW_LIVE_TRADING"
 : "${ALPACA_API_KEY:?ALPACA_API_KEY not set in environment}"
 : "${ALPACA_SECRET_KEY:?ALPACA_SECRET_KEY not set in environment}"
 TRADING_MODE="${TRADING_MODE:-paper}"

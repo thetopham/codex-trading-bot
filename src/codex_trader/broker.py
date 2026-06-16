@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -49,6 +50,8 @@ def submit_market_buy_with_trailing_stop(
     symbol: str,
     qty: int,
     trail_percent: Decimal = Decimal("10"),
+    stop_attempts: int = 3,
+    stop_retry_delay: float = 1.0,
 ) -> PaperOrderResult:
     if qty <= 0:
         raise ValueError("qty must be positive")
@@ -72,14 +75,25 @@ def submit_market_buy_with_trailing_stop(
         "trail_percent": str(trail_percent),
         "time_in_force": "gtc",
     })
-    stop = run_script(root, "alpaca.sh", "order", stop_body)
+    attempts = max(1, stop_attempts)
+    stop: ScriptResult | None = None
+    stop_errors: list[str] = []
+    for attempt in range(1, attempts + 1):
+        stop = run_script(root, "alpaca.sh", "order", stop_body)
+        if stop.ok:
+            break
+        stop_errors.append(f"attempt {attempt}: {stop.stderr or stop.stdout}")
+        if attempt < attempts and stop_retry_delay > 0:
+            time.sleep(stop_retry_delay)
+    assert stop is not None
+    stop_response = stop.stdout if stop.ok else "; ".join(stop_errors)
     return PaperOrderResult(
         symbol=symbol.upper(),
         qty=stop_qty,
         buy_ok=buy.ok,
         stop_ok=stop.ok,
         buy_response=buy.stdout if buy.ok else (buy.stderr or buy.stdout),
-        stop_response=stop.stdout if stop.ok else (stop.stderr or stop.stdout),
+        stop_response=stop_response,
     )
 
 

@@ -130,3 +130,11 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Relative strength vs SPY: 1D 5.30%, 5D 15.37%
 - Gate reasons: none
 - Broker action: paper_submit buy_ok=True trailing_stop_ok=False qty=157.
+
+
+## Protective Stop Repair — 2026-06-16
+
+- HIMS paper buy filled/opened: 157 shares at avg entry ~31.73.
+- Initial market-open trailing-stop submit returned `trailing_stop_ok=False`, likely because the buy fill/position was not yet visible when the stop was submitted.
+- Manual repair submitted a 10% GTC trailing stop for 157 HIMS shares.
+- Alpaca paper stop order: `a91d311a-20ff-455f-870e-87a19a28a917`, status `new`, HWM 31.73, stop_price 28.557.
