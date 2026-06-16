@@ -9,6 +9,8 @@ Open these before action:
 - `memory/RESEARCH-LOG.md`
 - `memory/PROJECT-CONTEXT.md`
 - `memory/WEEKLY-REVIEW.md`
+- `memory/BENCHMARK-LEDGER.csv`
+- `memory/BENCHMARK-REPORT.md`
 
 ## Hard Rules
 - Goal: beat SPX/SPY over the challenge window without violating hard risk gates.
@@ -18,6 +20,8 @@ Open these before action:
 - Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`, so a 10% stop can lose at most ~1% of portfolio equity before slippage.
 - Never trade without a documented TradingView MCP-backed catalyst in today's `memory/PREMARKET-CANDIDATES.json`.
 - Top 100 stocks by volume are a liquidity filter only; final candidates must come from TradingView MCP screening and must survive the market-open liquidity intersection.
+- Optional Perplexity research can corroborate macro/news/catalyst context, but it is not a substitute for TradingView MCP technical confirmation or deterministic gates.
+- Daily summary must update `memory/BENCHMARK-LEDGER.csv` and `memory/BENCHMARK-REPORT.md` so the bot judges itself against SPY/SPX.
 - New positions require a 10% trailing stop in paper/live-approved modes.
 - Cut losers at -7%.
 - Tighten trailing stop to 7% at +15%, 5% at +20%.

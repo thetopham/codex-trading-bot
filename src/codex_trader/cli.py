@@ -6,6 +6,13 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
+from .benchmark import (
+    ledger_path,
+    load_ledger,
+    record_benchmark_snapshot,
+    render_trade_log_benchmark_section,
+    render_weekly_benchmark_review,
+)
 from .broker import paper_submission_enabled, submit_market_buy_with_trailing_stop
 from .memory import MemoryStore, initialize_memory
 from .premarket import CANDIDATES_FILE, filter_signals_by_liquidity, load_premarket_signals
@@ -193,6 +200,16 @@ def cmd_daily_summary(args: argparse.Namespace) -> int:
     acct = run_script(root, "alpaca.sh", "account")
     positions = run_script(root, "alpaca.sh", "positions")
     stamp = date.today().isoformat()
+    benchmark_section = "### Benchmark\n- Benchmark update skipped: account snapshot failed."
+    benchmark_message = "benchmark skipped"
+    if acct.ok:
+        try:
+            row, rows, _report = record_benchmark_snapshot(root, stamp=stamp, account_raw=acct.stdout)
+            benchmark_section = render_trade_log_benchmark_section(row, rows)
+            benchmark_message = f"alpha vs {row.benchmark_symbol}={row.alpha_pct.quantize(Decimal('0.01'))}%"
+        except Exception as exc:
+            benchmark_section = f"### Benchmark\n- Benchmark update failed: {exc}"
+            benchmark_message = "benchmark failed"
     entry = f"""
 \n## EOD Snapshot — {stamp}
 
@@ -205,12 +222,56 @@ def cmd_daily_summary(args: argparse.Namespace) -> int:
 ```json
 {positions_summary(positions.stdout) if positions.ok else positions.stderr.strip()}
 ```
+
+{benchmark_section}
 """
     store.append("TRADE-LOG.md", entry)
-    message = f"Codex paper bot EOD {stamp}: snapshot appended. Account ok={acct.ok}; positions ok={positions.ok}."
+    message = f"Codex paper bot EOD {stamp}: snapshot appended. Account ok={acct.ok}; positions ok={positions.ok}; {benchmark_message}."
     run_script(root, "telegram.sh", message)
     print(message)
     return 0 if acct.ok and positions.ok else 2
+
+
+def cmd_benchmark_report(args: argparse.Namespace) -> int:
+    root = _root()
+    account_raw = None
+    equity = Decimal(args.equity) if args.equity else None
+    cash = Decimal(args.cash) if args.cash else None
+    if equity is None or cash is None:
+        acct = run_script(root, "alpaca.sh", "account")
+        if not acct.ok:
+            print(acct.stderr or acct.stdout)
+            return 2
+        account_raw = acct.stdout
+    benchmark_close = Decimal(args.benchmark_close) if args.benchmark_close else None
+    row, rows, report = record_benchmark_snapshot(
+        root,
+        stamp=args.date or date.today().isoformat(),
+        account_raw=account_raw,
+        bot_equity=equity,
+        cash=cash,
+        benchmark_symbol=args.benchmark_symbol,
+        benchmark_close=benchmark_close,
+    )
+    print(render_trade_log_benchmark_section(row, rows))
+    print(f"\nWrote memory/BENCHMARK-LEDGER.csv and memory/BENCHMARK-REPORT.md ({len(report.splitlines())} report lines).")
+    return 0
+
+
+def cmd_weekly_review(args: argparse.Namespace) -> int:
+    root = _root()
+    store = MemoryStore(root)
+    rows = load_ledger(ledger_path(root))
+    section = render_weekly_benchmark_review(rows, today=args.date or date.today().isoformat())
+    store.append("WEEKLY-REVIEW.md", section)
+    if rows:
+        latest = rows[-1]
+        message = f"Codex weekly benchmark: alpha vs {latest.benchmark_symbol}={latest.alpha_pct.quantize(Decimal('0.01'))}%; drawdown={latest.drawdown_pct.quantize(Decimal('0.01'))}%."
+    else:
+        message = "Codex weekly benchmark: no benchmark ledger rows yet."
+    run_script(root, "telegram.sh", message)
+    print(message)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -253,6 +314,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     daily = sub.add_parser("daily-summary")
     daily.set_defaults(func=cmd_daily_summary)
+
+    benchmark = sub.add_parser("benchmark-report")
+    benchmark.add_argument("--date", default="")
+    benchmark.add_argument("--equity", default="", help="bot equity override for offline/backfill use")
+    benchmark.add_argument("--cash", default="", help="cash override for offline/backfill use")
+    benchmark.add_argument("--benchmark-symbol", default="SPY")
+    benchmark.add_argument("--benchmark-close", default="", help="benchmark close override for offline/backfill use")
+    benchmark.set_defaults(func=cmd_benchmark_report)
+
+    weekly = sub.add_parser("weekly-review")
+    weekly.add_argument("--date", default="")
+    weekly.set_defaults(func=cmd_weekly_review)
     return p
 
 

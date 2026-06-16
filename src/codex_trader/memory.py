@@ -11,6 +11,8 @@ ROOT_MEMORY_FILES = [
     "WEEKLY-REVIEW.md",
     "PROJECT-CONTEXT.md",
     "PREMARKET-CANDIDATES.json",
+    "BENCHMARK-LEDGER.csv",
+    "BENCHMARK-REPORT.md",
 ]
 
 
@@ -39,12 +41,14 @@ def initialize_memory(root: Path) -> None:
     mem = root / "memory"
     mem.mkdir(parents=True, exist_ok=True)
     defaults = {
-        "TRADING-STRATEGY.md": """# Trading Strategy\n\nSafety boundary: paper/dry-run by default. Stocks only; no options.\n\n## Hard Rules\n- Take every qualified TradingView MCP opportunity while cash is available and per-position risk gates pass; there is no fixed max-position or weekly-trade-count cap.\n- Max per-position risk: 1% of portfolio equity at the required 10% stop.\n- Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`.\n- Every new position requires a documented catalyst.\n- Every new position gets a 10% GTC trailing stop in paper/live-approved modes.\n- Cut losers at -7%.\n- Tighten trail to 7% at +15%, 5% at +20%.\n- Never move a stop down.\n- Telegram notifications are sparse: action taken or required daily/weekly summary.\n""",
+        "TRADING-STRATEGY.md": """# Trading Strategy\n\nSafety boundary: paper/dry-run by default. Stocks only; no options.\n\n## Hard Rules\n- Take every qualified TradingView MCP opportunity while cash is available and per-position risk gates pass; there is no fixed max-position or weekly-trade-count cap.\n- Daily summaries update `memory/BENCHMARK-LEDGER.csv` and `memory/BENCHMARK-REPORT.md` so the bot judges itself against SPY/SPX.\n- Max per-position risk: 1% of portfolio equity at the required 10% stop.\n- Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`.\n- Every new position requires a documented catalyst.\n- Every new position gets a 10% GTC trailing stop in paper/live-approved modes.\n- Cut losers at -7%.\n- Tighten trail to 7% at +15%, 5% at +20%.\n- Never move a stop down.\n- Telegram notifications are sparse: action taken or required daily/weekly summary.\n""",
         "TRADE-LOG.md": """# Trade Log\n\n## Day 0 Baseline\n- Equity: unknown\n- Cash: unknown\n- Note: seed this with a real paper account EOD snapshot before scheduled daily summaries.\n""",
         "RESEARCH-LOG.md": """# Research Log\n\nNo research yet. Pre-market workflow appends dated entries.\n""",
         "WEEKLY-REVIEW.md": """# Weekly Review\n\n## Template\n- Starting equity:\n- Ending equity:\n- Return:\n- Grade:\n- Lessons:\n""",
         "PROJECT-CONTEXT.md": """# Project Context\n\nCodex-style AI trading agent adapted for Hermes/local operation. Uses Alpaca paper by default, Yahoo/yfinance as the liquidity filter, TradingView MCP as the primary screener, Telegram notifications, and git-backed markdown memory. Live trading is out of scope unless explicitly approved later.\n""",
         "PREMARKET-CANDIDATES.json": """{\n  \"date\": null,\n  \"source\": \"TradingView MCP screening over top-100-volume liquidity filter\",\n  \"candidates\": []\n}\n""",
+        "BENCHMARK-LEDGER.csv": "date,bot_equity,cash,benchmark_symbol,benchmark_close,bot_daily_return_pct,benchmark_daily_return_pct,bot_cumulative_return_pct,benchmark_cumulative_return_pct,alpha_pct,drawdown_pct,exposure_pct\n",
+        "BENCHMARK-REPORT.md": "# Benchmark Report\n\nNo benchmark data recorded yet.\n",
     }
     for name, content in defaults.items():
         path = mem / name

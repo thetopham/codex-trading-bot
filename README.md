@@ -38,11 +38,11 @@ README.md
 pyproject.toml
 scripts/
   alpaca.sh               # Alpaca wrapper; dry-run guards mutating calls
-  perplexity.sh           # legacy optional wrapper; automation uses yfinance instead
-
+  perplexity.sh           # optional cited market/news research wrapper
   telegram.sh             # Telegram notification wrapper with local fallback
 src/codex_trader/
   cli.py                  # CLI commands
+  benchmark.py            # bot-vs-SPY ledger/report/judgment logic
   research.py             # top-volume Yahoo Finance scanner and candidate renderer
   memory.py               # markdown memory helpers
 memory/                   # git-backed agent memory
@@ -58,7 +58,9 @@ codex-trader market-open-intents     # use today's TradingView MCP candidates + 
 codex-trader portfolio              # account/positions/orders via Alpaca wrapper
 codex-trader check-trade ...         # deterministic buy-side gate check
 codex-trader midday-scan             # dry-run action scan from positions
-codex-trader daily-summary           # append EOD snapshot + Telegram/fallback notify
+codex-trader daily-summary           # append EOD snapshot, SPY benchmark row/report, Telegram/fallback notify
+codex-trader benchmark-report        # manual/backfill bot-vs-SPY ledger/report update
+codex-trader weekly-review           # append weekly benchmark judgment to WEEKLY-REVIEW.md
 ```
 
 ## Automation Runner
@@ -84,6 +86,22 @@ Automated research now uses two layers:
 2. **TradingView MCP primary screener** from [`atilaahmettaner/tradingview-mcp`](https://github.com/atilaahmettaner/tradingview-mcp) through Hermes MCP tools. Use it as the alpha layer: top gainers/losers, volume breakouts, smart volume, Bollinger scans, rating filters, combined analysis, multi-timeframe analysis, backtest/walk-forward checks where practical, news, and sentiment.
 3. **Liquidity intersection**: pre-market writes final MCP-screened candidates to `memory/PREMARKET-CANDIDATES.json`; market-open rechecks that each candidate is still in the current top-100 volume filter before sizing or submitting.
 4. **Benchmark context** from SPY/SPX. Candidate ideas should explain why they may beat SPY over the swing window; otherwise default to HOLD.
+5. **Optional Perplexity news/citation layer**. The original Opus guide used Perplexity for cited market context. This repo keeps TradingView MCP as the technical screener, but `scripts/perplexity.sh` can add cited macro/news/catalyst context when `PERPLEXITY_API_KEY` is configured.
+
+## Benchmark / Self-Judgment
+
+Daily summaries now make the bot judge itself against SPY:
+
+- `memory/BENCHMARK-LEDGER.csv` stores date, bot equity, cash, SPY close, daily returns, cumulative returns, alpha, drawdown, and exposure.
+- `memory/BENCHMARK-REPORT.md` renders the latest scoreboard and judgment: baseline/ahead/behind.
+- `memory/TRADE-LOG.md` EOD snapshots include a Benchmark section.
+- `codex-trader weekly-review` appends a weekly benchmark review to `memory/WEEKLY-REVIEW.md`.
+
+Manual/backfill example:
+
+```bash
+codex-trader benchmark-report --date 2026-06-16 --equity 50000 --cash 25000 --benchmark-close 600
+```
 
 The market-open step submits Alpaca **paper** broker orders only when `PAPER_ORDER_SUBMISSION=true` and the runner has switched `DRY_RUN=false` for the market-open workflow. It sizes each approved candidate so the required 10% trailing stop risks at most 1% of current portfolio equity: `qty = floor((equity * 0.01 / 0.10) / reference_price)`. It then buys approved candidates and immediately attempts a 10% GTC trailing stop. Other workflows force `DRY_RUN=true`.
 

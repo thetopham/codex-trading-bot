@@ -68,9 +68,7 @@ case "$workflow" in
     codex-trader daily-summary
     ;;
   weekly-review)
-    codex-trader portfolio >/tmp/codex_weekly_portfolio.out
-    echo "Codex Trader weekly review ${stamp}: portfolio snapshot succeeded; write-up scaffold active."
-    bash scripts/telegram.sh "Codex Trader weekly review ${stamp}: portfolio snapshot succeeded; write-up scaffold active."
+    codex-trader weekly-review
     ;;
   *)
     echo "unknown workflow: $workflow" >&2

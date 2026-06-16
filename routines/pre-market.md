@@ -32,6 +32,7 @@ Use `atilaahmettaner/tradingview-mcp` tools exposed in Hermes as `mcp_tradingvie
    - `mcp_tradingview_financial_news(symbol=...)` and/or `mcp_tradingview_market_sentiment(...)` where useful.
    - `mcp_tradingview_compare_strategies(...)`, `mcp_tradingview_backtest_strategy(...)`, or `mcp_tradingview_walk_forward_backtest_strategy(...)` when practical for high-conviction finalists.
 4. Include SPY/SPX benchmark context. If a candidate lacks a plausible reason to outperform SPY over the swing window, mark it HOLD or skip.
+5. Optional Perplexity layer: the original Opus guide used Perplexity for cited market/news context. If `PERPLEXITY_API_KEY` is configured, use `scripts/perplexity.sh` or web research for macro/news/catalyst corroboration, but keep TradingView MCP as the technical screener and do not let cited news bypass deterministic gates.
 
 ## Required outputs
 

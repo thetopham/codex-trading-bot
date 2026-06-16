@@ -6,6 +6,8 @@ Safety boundary: Alpaca paper only unless explicitly changed later. Stocks only;
 
 ## Benchmark Discipline
 - Compare daily and weekly performance against SPY/SPX.
+- `memory/BENCHMARK-LEDGER.csv` is the source of truth for bot equity, SPY close, daily/cumulative returns, alpha, drawdown, and exposure.
+- `memory/BENCHMARK-REPORT.md` is the bot's self-judgment report; do not claim alpha without this ledger.
 - A trade idea should have a plausible reason to outperform simply holding SPY over the same swing window.
 - If the top-volume opportunity set is weak versus SPY momentum, default to HOLD or SPY-like benchmark exposure rather than forcing single-name risk.
 - Weekly review must note whether the bot is ahead/behind SPY and why.
@@ -15,6 +17,7 @@ Safety boundary: Alpaca paper only unless explicitly changed later. Stocks only;
 - Top-volume is not the alpha engine; it only decides whether a name is liquid enough to consider.
 - Primary alpha/screening layer: `atilaahmettaner/tradingview-mcp` via Hermes MCP tools.
 - Use TradingView MCP for top gainers/losers, volume breakouts, smart volume, Bollinger/rating filters, combined analysis, multi-timeframe analysis, news/sentiment where useful, and SPY/SPX benchmark context.
+- Optional Perplexity research may add cited macro/news/catalyst context like the original Opus guide, but TradingView MCP remains the technical screener and deterministic gates still own execution.
 - Write final pre-market trade candidates to `memory/PREMARKET-CANDIDATES.json`; market-open must order only from that file after intersecting with the current top-volume liquidity filter.
 - Treat MCP outputs as research data, not automatic trade commands.
 
