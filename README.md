@@ -80,13 +80,14 @@ The runner refuses automated execution unless `TRADING_MODE=paper`, the Alpaca e
 
 ## Research Inputs
 
-Automated research now uses two layers:
+Automated research now uses these layers:
 
 1. **Top-volume liquidity filter** from Yahoo Finance/yfinance `most_actives`, ranked by latest actual volume after direct OHLCV fetch. This is not the alpha engine; it is a liquidity guard so the bot trades only names with deep participation. Forced watchlist symbols such as `SPCX` are fetched directly and can enter the filter if actual volume qualifies.
-2. **TradingView MCP primary screener** from [`atilaahmettaner/tradingview-mcp`](https://github.com/atilaahmettaner/tradingview-mcp) through Hermes MCP tools. Use it as the alpha layer: top gainers/losers, volume breakouts, smart volume, Bollinger scans, rating filters, combined analysis, multi-timeframe analysis, backtest/walk-forward checks where practical, news, and sentiment.
+2. **TradingView MCP simplified screener** from [`atilaahmettaner/tradingview-mcp`](https://github.com/atilaahmettaner/tradingview-mcp) through Hermes MCP tools. Use one clear technical setup as the hard gate: a scanner hit such as volume breakout/smart volume/rating/Bollinger/top gainers, or a constructive `combined_analysis`/`multi_timeframe` result. News, sentiment, backtests, and extra scan agreement are optional score/context, not daily vetoes.
 3. **Liquidity intersection**: pre-market writes final MCP-screened candidates to `memory/PREMARKET-CANDIDATES.json`; market-open rechecks that each candidate is still in the current top-100 volume filter before sizing or submitting.
-4. **Benchmark context** from SPY/SPX. Candidate ideas should explain why they may beat SPY over the swing window; otherwise default to HOLD.
-5. **Optional Perplexity news/citation layer**. The original Opus guide used Perplexity for cited market context. This repo keeps TradingView MCP as the technical screener, but `scripts/perplexity.sh` can add cited macro/news/catalyst context when `PERPLEXITY_API_KEY` is configured.
+4. **Benchmark-relative gate** from SPY/SPX. Candidate JSON must include an explicit outperformance thesis and relative-strength context; `market-open-intents` rejects benchmark-free beta trades even if the chart looks bullish.
+5. **Lean MCP scoring** ranks candidates after the one-setup hard gate. Suggested bands: `>=70` candidate, `50–69` watch/HOLD, `<50` reject/HOLD. The market-open loader does not require every scoring component.
+6. **Optional Perplexity news/citation layer**. The original Opus guide used Perplexity for cited market context. This repo keeps TradingView MCP as the technical screener, but `scripts/perplexity.sh` can add cited macro/news/catalyst context when `PERPLEXITY_API_KEY` is configured. Perplexity-only ideas are rejected unless TradingView MCP evidence and the benchmark thesis are present.
 
 ## Benchmark / Self-Judgment
 

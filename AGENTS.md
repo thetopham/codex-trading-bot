@@ -18,7 +18,7 @@ Open these before action:
 - Take every qualified TradingView MCP opportunity while cash is available and per-position risk gates pass; there is no fixed max-position or weekly-trade-count cap.
 - Max per-position risk: 1% of portfolio equity at the required 10% stop.
 - Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`, so a 10% stop can lose at most ~1% of portfolio equity before slippage.
-- Never trade without a documented TradingView MCP-backed catalyst in today's `memory/PREMARKET-CANDIDATES.json`.
+- Never trade without one documented TradingView MCP technical setup and explicit SPY/SPX outperformance thesis in today's `memory/PREMARKET-CANDIDATES.json`; extra MCP tools are score/context, not hard gates, and market-open rejects generic market-beta ideas.
 - Top 100 stocks by volume are a liquidity filter only; final candidates must come from TradingView MCP screening and must survive the market-open liquidity intersection.
 - Optional Perplexity research can corroborate macro/news/catalyst context, but it is not a substitute for TradingView MCP technical confirmation or deterministic gates.
 - Daily summary must update `memory/BENCHMARK-LEDGER.csv` and `memory/BENCHMARK-REPORT.md` so the bot judges itself against SPY/SPX.

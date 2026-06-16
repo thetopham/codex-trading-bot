@@ -7,6 +7,8 @@ from decimal import Decimal, ROUND_DOWN
 from pathlib import Path
 from typing import Iterable
 
+BENCHMARK_SYMBOL = "SPY"
+
 TOP_VOLUME_UNIVERSE = [
     "NVDA", "TSLA", "AAPL", "AMD", "PLTR", "AMZN", "MSFT", "META", "GOOGL", "GOOG",
     "AVGO", "NFLX", "INTC", "MARA", "RIOT", "SMCI", "MU", "COIN", "SOFI", "HOOD",
@@ -51,6 +53,7 @@ SYMBOL_SECTOR = {
     "BA": "industrials", "CAT": "industrials", "DE": "industrials", "GE": "industrials", "GM": "consumer_discretionary", "F": "consumer_discretionary",
 }
 
+
 @dataclass(frozen=True)
 class Candidate:
     symbol: str
@@ -61,6 +64,11 @@ class Candidate:
     five_day_change_pct: Decimal
     score: Decimal
     sector: str
+    benchmark_symbol: str = BENCHMARK_SYMBOL
+    benchmark_day_change_pct: Decimal = Decimal("0")
+    benchmark_five_day_change_pct: Decimal = Decimal("0")
+    relative_day_change_pct: Decimal = Decimal("0")
+    relative_five_day_change_pct: Decimal = Decimal("0")
 
     @property
     def suggested_qty(self) -> int:
@@ -81,8 +89,11 @@ class Candidate:
     @property
     def catalyst(self) -> str:
         return (
-            f"Top-volume momentum candidate: volume {self.volume:,} vs avg {self.avg_volume:,}; "
-            f"1D {self.day_change_pct:.2f}%, 5D {self.five_day_change_pct:.2f}%."
+            f"Liquidity/relative-strength reference: volume {self.volume:,} vs avg {self.avg_volume:,}; "
+            f"1D {self.day_change_pct:.2f}% vs {self.benchmark_symbol} {self.benchmark_day_change_pct:.2f}% "
+            f"(rel {self.relative_day_change_pct:.2f}%), 5D {self.five_day_change_pct:.2f}% vs "
+            f"{self.benchmark_symbol} {self.benchmark_five_day_change_pct:.2f}% "
+            f"(rel {self.relative_five_day_change_pct:.2f}%)."
         )
 
 
@@ -138,27 +149,52 @@ def most_active_symbols(limit: int = 100) -> list[str]:
     return _unique_symbols((symbols or TOP_VOLUME_UNIVERSE) + _forced_watchlist_symbols())
 
 
-def _extract_rows(data, symbols: Iterable[str]) -> list[Candidate]:
-    rows: list[Candidate] = []
-    for symbol in symbols:
+def _frame_for_symbol(data, symbol: str):
+    try:
+        return data[symbol].dropna(subset=["Close", "Volume"])
+    except Exception:
+        # yfinance returns a flat frame when only one symbol is requested. This path is
+        # mainly defensive because production calls download many symbols + SPY.
         try:
-            frame = data[symbol].dropna(subset=["Close", "Volume"])
+            return data.dropna(subset=["Close", "Volume"])
         except Exception:
-            continue
-        if len(frame) < 2:
+            return None
+
+
+def _change_pair_for_symbol(data, symbol: str) -> tuple[Decimal, Decimal]:
+    frame = _frame_for_symbol(data, symbol)
+    if frame is None or len(frame) < 2:
+        return Decimal("0"), Decimal("0")
+    latest = frame.iloc[-1]
+    prev = frame.iloc[-2]
+    first = frame.iloc[0]
+    latest_close = _to_decimal(latest.get("Close"))
+    prev_close = _to_decimal(prev.get("Close"))
+    first_close = _to_decimal(first.get("Close"))
+    day_change = ((latest_close - prev_close) / prev_close * Decimal("100")) if prev_close else Decimal("0")
+    five_day = ((latest_close - first_close) / first_close * Decimal("100")) if first_close else Decimal("0")
+    return day_change, five_day
+
+
+def _extract_rows(data, symbols: Iterable[str], benchmark_symbol: str = BENCHMARK_SYMBOL) -> list[Candidate]:
+    rows: list[Candidate] = []
+    benchmark_day, benchmark_five = _change_pair_for_symbol(data, benchmark_symbol)
+    for symbol in symbols:
+        frame = _frame_for_symbol(data, symbol)
+        if frame is None or len(frame) < 2:
             continue
         latest = frame.iloc[-1]
-        prev = frame.iloc[-2]
-        first = frame.iloc[0]
         last_price = _to_decimal(latest.get("Close"))
         if last_price <= 0:
             continue
         volume = int(latest.get("Volume") or 0)
         avg_volume = int(frame["Volume"].tail(min(10, len(frame))).mean() or 0)
-        day_change = ((_to_decimal(latest.get("Close")) - _to_decimal(prev.get("Close"))) / _to_decimal(prev.get("Close")) * Decimal("100")) if _to_decimal(prev.get("Close")) else Decimal("0")
-        five_day = ((_to_decimal(latest.get("Close")) - _to_decimal(first.get("Close"))) / _to_decimal(first.get("Close")) * Decimal("100")) if _to_decimal(first.get("Close")) else Decimal("0")
+        day_change, five_day = _change_pair_for_symbol(data, symbol)
         rel_volume = Decimal(volume) / Decimal(avg_volume) if avg_volume else Decimal("0")
-        score = (rel_volume * Decimal("2")) + day_change + (five_day * Decimal("0.5"))
+        relative_day = day_change - benchmark_day
+        relative_five = five_day - benchmark_five
+        # Score is a benchmark-relative research hint only; TradingView MCP remains the alpha gate.
+        score = (rel_volume * Decimal("2")) + relative_day + (relative_five * Decimal("0.5"))
         rows.append(Candidate(
             symbol=symbol,
             last_price=last_price.quantize(Decimal("0.01")),
@@ -168,20 +204,36 @@ def _extract_rows(data, symbols: Iterable[str]) -> list[Candidate]:
             five_day_change_pct=five_day.quantize(Decimal("0.01")),
             score=score.quantize(Decimal("0.01")),
             sector=SYMBOL_SECTOR.get(symbol, "unknown"),
+            benchmark_symbol=benchmark_symbol,
+            benchmark_day_change_pct=benchmark_day.quantize(Decimal("0.01")),
+            benchmark_five_day_change_pct=benchmark_five.quantize(Decimal("0.01")),
+            relative_day_change_pct=relative_day.quantize(Decimal("0.01")),
+            relative_five_day_change_pct=relative_five.quantize(Decimal("0.01")),
         ))
     return rows
 
 
 def top_volume_candidates(limit: int = 100, picks: int = 5) -> tuple[list[Candidate], list[Candidate]]:
     symbols = most_active_symbols(limit)
-    data = _download_market_data(symbols)
-    rows = _extract_rows(data, symbols)
+    data_symbols = _unique_symbols(symbols + [BENCHMARK_SYMBOL])
+    data = _download_market_data(data_symbols)
+    rows = _extract_rows(data, symbols, benchmark_symbol=BENCHMARK_SYMBOL)
     top_by_volume = sorted(rows, key=lambda r: r.volume, reverse=True)[:limit]
-    # Favor positive momentum; if no positive rows, return highest score anyway.
-    positive = [r for r in top_by_volume if r.day_change_pct > 0 and r.five_day_change_pct > 0]
+    # Favor SPY-relative momentum; if no positive relative rows, return highest score anyway.
+    positive = [r for r in top_by_volume if r.relative_day_change_pct > 0 and r.relative_five_day_change_pct > 0]
     pool = positive if positive else top_by_volume
     selected = sorted(pool, key=lambda r: r.score, reverse=True)[:picks]
     return top_by_volume, selected
+
+
+def _benchmark_summary(top_by_volume: list[Candidate]) -> str:
+    if not top_by_volume:
+        return f"{BENCHMARK_SYMBOL} benchmark context unavailable."
+    sample = top_by_volume[0]
+    return (
+        f"{sample.benchmark_symbol}: 1D {sample.benchmark_day_change_pct}%, "
+        f"5D {sample.benchmark_five_day_change_pct}%."
+    )
 
 
 def render_liquidity_filter_markdown(top_by_volume: list[Candidate], today: date | None = None) -> str:
@@ -189,16 +241,17 @@ def render_liquidity_filter_markdown(top_by_volume: list[Candidate], today: date
     lines = [
         f"\n## Liquidity Filter — {today.isoformat()}",
         "",
-        "Top-volume stocks are a liquidity filter only. Final trade candidates must come from TradingView MCP screening and be written to `memory/PREMARKET-CANDIDATES.json`.",
+        "Top-volume stocks are a liquidity filter only. Final trade candidates must come from TradingView MCP screening, include a SPY/SPX outperformance thesis, and be written to `memory/PREMARKET-CANDIDATES.json`.",
+        f"Benchmark proxy context: {_benchmark_summary(top_by_volume)}",
         "",
-        "| Rank | Symbol | Last | Volume | Avg Vol | 1D % | 5D % | Score | Sector |",
-        "|---:|---|---:|---:|---:|---:|---:|---:|---|",
+        "| Rank | Symbol | Last | Volume | Avg Vol | 1D % | 5D % | Rel 1D vs SPY | Rel 5D vs SPY | Score | Sector |",
+        "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for i, c in enumerate(top_by_volume, 1):
-        lines.append(f"| {i} | {c.symbol} | {c.last_price} | {c.volume} | {c.avg_volume} | {c.day_change_pct} | {c.five_day_change_pct} | {c.score} | {c.sector} |")
+        lines.append(f"| {i} | {c.symbol} | {c.last_price} | {c.volume} | {c.avg_volume} | {c.day_change_pct} | {c.five_day_change_pct} | {c.relative_day_change_pct} | {c.relative_five_day_change_pct} | {c.score} | {c.sector} |")
     lines += [
         "",
-        "Decision rule: HOLD unless TradingView MCP scanners confirm a liquid setup with a documented catalyst and market-open risk gates pass.",
+        "Decision rule: HOLD unless TradingView MCP scanners confirm a liquid setup with a documented catalyst, an explicit reason to beat SPY/SPX, and market-open risk gates pass.",
         "",
     ]
     return "\n".join(lines)
@@ -209,30 +262,32 @@ def render_research_markdown(top_by_volume: list[Candidate], selected: list[Cand
     lines = [
         f"\n## Pre-market Research — {today.isoformat()}",
         "",
-        "Research source: Yahoo Finance daily OHLCV via `yfinance`; universe is a static high-liquidity list ranked by latest reported volume. No Perplexity dependency.",
+        "Research source: Yahoo Finance daily OHLCV via `yfinance`; universe is a static high-liquidity list ranked by latest reported volume. No Perplexity dependency. Top-volume names are benchmark-relative liquidity hints only; TradingView MCP must still supply the trade evidence.",
+        f"Benchmark proxy context: {_benchmark_summary(top_by_volume)}",
         "",
         "### Top 100 volume universe snapshot",
         "",
-        "| Rank | Symbol | Last | Volume | Avg Vol | 1D % | 5D % | Score | Sector |",
-        "|---:|---|---:|---:|---:|---:|---:|---:|---|",
+        "| Rank | Symbol | Last | Volume | Avg Vol | 1D % | 5D % | Rel 1D vs SPY | Rel 5D vs SPY | Score | Sector |",
+        "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for i, c in enumerate(top_by_volume, 1):
-        lines.append(f"| {i} | {c.symbol} | {c.last_price} | {c.volume} | {c.avg_volume} | {c.day_change_pct} | {c.five_day_change_pct} | {c.score} | {c.sector} |")
+        lines.append(f"| {i} | {c.symbol} | {c.last_price} | {c.volume} | {c.avg_volume} | {c.day_change_pct} | {c.five_day_change_pct} | {c.relative_day_change_pct} | {c.relative_five_day_change_pct} | {c.score} | {c.sector} |")
     lines += ["", "### Candidate trade ideas", ""]
     if not selected:
-        lines.append("Decision: HOLD — no candidates passed the positive momentum filter.")
+        lines.append("Decision: HOLD — no candidates passed the positive SPY-relative momentum reference filter.")
     for c in selected:
         lines += [
             f"#### {c.symbol}",
-            f"- Catalyst: {c.catalyst}",
+            f"- Liquidity/relative-strength reference: {c.catalyst}",
+            f"- Benchmark gate: pre-market MCP output must explain why {c.symbol} can outperform {c.benchmark_symbol}; market-open rejects benchmark-free beta trades.",
             f"- Sector: {c.sector}",
             f"- Entry reference: {c.last_price}",
             f"- Sizing note: market-open computes qty from live equity so a 10% trailing stop risks at most ~1% of portfolio equity.",
             f"- Reference stop discipline: 10% trailing stop on submitted paper position",
             f"- Reference target: {(c.last_price * Decimal('1.20')).quantize(Decimal('0.01'))}",
             "- Risk/reward: approx 2:1 against the required 10% trailing stop",
-            "- Decision: candidate; market-open gate must revalidate quote, cash, liquidity, per-position risk, and catalyst.",
+            "- Decision: liquidity reference only; candidate requires TradingView MCP confirmation, SPY/SPX outperformance thesis, and market-open gates.",
             "",
         ]
-    lines += ["### Default decision", "HOLD unless market-open revalidation confirms a candidate and risk gates pass.", ""]
+    lines += ["### Default decision", "HOLD unless market-open revalidation confirms a benchmark-relative MCP candidate and risk gates pass.", ""]
     return "\n".join(lines)
