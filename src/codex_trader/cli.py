@@ -127,7 +127,11 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
     positions = [Position.from_api(p) for p in json.loads(pos_result.stdout or "[]")]
     top_by_volume, _legacy_selected = top_volume_candidates(limit=args.limit, picks=args.picks)
     signals, signal_status = load_premarket_signals(root)
-    selected_pairs, liquidity_skips = filter_signals_by_liquidity(signals, top_by_volume, limit=args.picks)
+    selected_pairs, liquidity_skips = filter_signals_by_liquidity(
+        signals,
+        top_by_volume,
+        limit=args.picks if args.picks > 0 else None,
+    )
     trade_log_text = store.read("TRADE-LOG.md")
     lines = [f"\n## Market-open TradingView MCP Candidates — {date.today().isoformat()}", ""]
     lines += [
@@ -140,7 +144,7 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
     approved = []
     submitted = []
     submit_enabled = paper_submission_enabled()
-    max_submit = args.max_submit
+    max_submit = args.max_submit if args.max_submit > 0 else None
     if not selected_pairs:
         lines += [
             "No market-open candidates passed the TradingView MCP + top-volume liquidity intersection. No broker submissions attempted.",
@@ -154,7 +158,7 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
         if gate.approved:
             approved.append(c.symbol)
         broker_action = "none; DRY_RUN intent only"
-        if gate.approved and submit_enabled and len(submitted) < max_submit:
+        if gate.approved and submit_enabled and (max_submit is None or len(submitted) < max_submit):
             result = submit_market_buy_with_trailing_stop(root, symbol=c.symbol, qty=int(qty))
             if result.buy_ok:
                 submitted.append(c.symbol)
@@ -243,8 +247,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     intents = sub.add_parser("market-open-intents")
     intents.add_argument("--limit", type=int, default=100)
-    intents.add_argument("--picks", type=int, default=3)
-    intents.add_argument("--max-submit", type=int, default=3)
+    intents.add_argument("--picks", type=int, default=0, help="maximum candidates to process; 0 means all liquid MCP candidates")
+    intents.add_argument("--max-submit", type=int, default=0, help="maximum paper orders to submit; 0 means no artificial cap")
     intents.set_defaults(func=cmd_market_open_intents)
 
     daily = sub.add_parser("daily-summary")

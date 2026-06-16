@@ -8,8 +8,9 @@ Safety: Alpaca paper/dry-run by default. Stocks only. Do not submit live orders.
 4. Refresh the top-100-volume liquidity filter with `codex-trader market-open-intents`; it recomputes yfinance top volume internally.
 5. Intersect today's TradingView MCP candidates with the current top-volume filter. Reject any candidate not still liquid.
 6. Size every candidate with `floor((equity * 0.01 / 0.10) / entry_price)` so the required 10% stop risks at most ~1% of portfolio equity before slippage.
-7. Run deterministic buy gates with `codex_trader.rules.validate_buy_gate`; reject any candidate whose 10% stop risk exceeds 1% of portfolio equity.
-8. With `DRY_RUN=true`, log approved order intents only. Only call `scripts/alpaca.sh order` when paper order submission is explicitly enabled and the runner has set `DRY_RUN=false`.
-9. Append skipped/approved intents to `memory/TRADE-LOG.md`, including qty, notional, 10% stop risk, MCP score/sources, liquidity skips, and broker action.
-10. Telegram notification only if a paper order or approved dry-run intent exists.
-11. Commit memory changes if any; never force-push.
+7. Do not apply fixed max-position or weekly-trade-count caps; take every qualified candidate while cash is available and all per-position gates pass.
+8. Run deterministic buy gates with `codex_trader.rules.validate_buy_gate`; reject any candidate whose 10% stop risk exceeds 1% of portfolio equity.
+9. With `DRY_RUN=true`, log approved order intents only. Only call `scripts/alpaca.sh order` when paper order submission is explicitly enabled and the runner has set `DRY_RUN=false`.
+10. Append skipped/approved intents to `memory/TRADE-LOG.md`, including qty, notional, 10% stop risk, MCP score/sources, liquidity skips, and broker action.
+11. Telegram notification only if a paper order or approved dry-run intent exists.
+12. Commit memory changes if any; never force-push.

@@ -84,7 +84,7 @@ def filter_signals_by_liquidity(
     signals: Iterable[PremarketSignal],
     top_by_volume: Iterable[Candidate],
     *,
-    limit: int = 3,
+    limit: int | None = None,
 ) -> tuple[list[tuple[PremarketSignal, Candidate]], list[str]]:
     liquidity_by_symbol = {c.symbol: c for c in top_by_volume}
     selected: list[tuple[PremarketSignal, Candidate]] = []
@@ -96,7 +96,9 @@ def filter_signals_by_liquidity(
             continue
         selected.append((signal, liquid))
     selected.sort(key=lambda pair: pair[0].mcp_score, reverse=True)
-    return selected[:limit], skipped
+    if limit is not None and limit > 0:
+        return selected[:limit], skipped
+    return selected, skipped
 
 
 def empty_candidate_payload(today: date | None = None) -> dict[str, object]:

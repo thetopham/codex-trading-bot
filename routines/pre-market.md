@@ -39,7 +39,7 @@ Append `memory/RESEARCH-LOG.md` with:
 - source summary: top-100-volume liquidity filter + TradingView MCP screening
 - MCP scans used and notable rejected low-liquidity hits
 - SPY/SPX benchmark context
-- 2-5 final candidate trade ideas with ticker, MCP evidence, catalyst/technical reason, entry reference, 10% trailing-stop discipline, approx 2:1 target, risks, and HOLD/candidate decision
+- all qualified final candidate trade ideas with ticker, MCP evidence, catalyst/technical reason, entry reference, 10% trailing-stop discipline, approx 2:1 target, risks, and HOLD/candidate decision; do not apply a fixed count cap, because capital and per-position stop risk handle opportunity count
 - explicit note that market-open must revalidate deterministic gates before paper order submission.
 
 Overwrite `memory/PREMARKET-CANDIDATES.json` with machine-readable final candidates using this schema:

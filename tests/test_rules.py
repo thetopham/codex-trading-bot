@@ -35,24 +35,37 @@ def test_buy_gate_rejects_options_and_missing_catalyst():
     assert "missing_documented_catalyst" in result.reasons
 
 
-def test_buy_gate_enforces_position_cash_weekly_and_pdt_caps():
+def test_buy_gate_ignores_position_count_and_weekly_trade_count_but_keeps_capital_risk_and_pdt_gates():
     idea = TradeIdea(symbol="MSFT", qty=Decimal("30"), estimated_price=Decimal("100"), catalyst="earnings")
-    positions = [pos(str(i)) for i in range(6)]
+    positions = [pos(str(i)) for i in range(25)]
     result = validate_buy_gate(
         account=account(equity="10000", cash="500", daytrade_count=3),
         positions=positions,
         idea=idea,
-        trade_log_text="New trade:\nNew trade:\nNew trade:\n",
+        trade_log_text="New trade:\nNew trade:\nNew trade:\nNew trade:\n",
     )
     assert not result.approved
+    assert "too_many_open_positions_after_fill" not in result.reasons
+    assert "weekly_trade_cap_exceeded" not in result.reasons
     for reason in [
-        "too_many_open_positions_after_fill",
-        "weekly_trade_cap_exceeded",
         "position_risk_exceeds_1pct_portfolio_at_10pct_stop",
         "insufficient_cash",
         "pdt_daytrade_count_full",
     ]:
         assert reason in result.reasons
+
+
+def test_buy_gate_allows_more_positions_and_weekly_trades_when_cash_and_risk_fit():
+    idea = TradeIdea(symbol="MSFT", qty=Decimal("1"), estimated_price=Decimal("100"), catalyst="earnings")
+    positions = [pos(str(i)) for i in range(25)]
+    result = validate_buy_gate(
+        account=account(equity="50000", cash="50000", daytrade_count=0),
+        positions=positions,
+        idea=idea,
+        trade_log_text="New trade:\n" * 20,
+    )
+    assert result.approved
+    assert result.reasons == ()
 
 
 def test_risk_sizing_limits_10pct_stop_to_1pct_of_portfolio():

@@ -53,10 +53,10 @@ case "$workflow" in
     codex-trader portfolio
     ;;
   pre-market)
-    codex-trader pre-market-research --limit 100 --picks 5
+    codex-trader pre-market-research --limit 100
     ;;
   market-open)
-    codex-trader market-open-intents --limit 100 --picks 3
+    codex-trader market-open-intents --limit 100
     ;;
   midday)
     codex-trader midday-scan | tee /tmp/codex_midday_scan.out

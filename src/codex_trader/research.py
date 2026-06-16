@@ -231,7 +231,7 @@ def render_research_markdown(top_by_volume: list[Candidate], selected: list[Cand
             f"- Reference stop discipline: 10% trailing stop on submitted paper position",
             f"- Reference target: {(c.last_price * Decimal('1.20')).quantize(Decimal('0.01'))}",
             "- Risk/reward: approx 2:1 against the required 10% trailing stop",
-            "- Decision: candidate; market-open gate must revalidate quote, cash, weekly trade cap, position cap, and catalyst.",
+            "- Decision: candidate; market-open gate must revalidate quote, cash, liquidity, per-position risk, and catalyst.",
             "",
         ]
     lines += ["### Default decision", "HOLD unless market-open revalidation confirms a candidate and risk gates pass.", ""]

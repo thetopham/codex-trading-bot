@@ -13,10 +13,9 @@ Open these before action:
 ## Hard Rules
 - Goal: beat SPX/SPY over the challenge window without violating hard risk gates.
 - Stocks only. No options.
-- Max 6 open positions.
+- Take every qualified TradingView MCP opportunity while cash is available and per-position risk gates pass; there is no fixed max-position or weekly-trade-count cap.
 - Max per-position risk: 1% of portfolio equity at the required 10% stop.
 - Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`, so a 10% stop can lose at most ~1% of portfolio equity before slippage.
-- Max 3 new trades per week.
 - Never trade without a documented TradingView MCP-backed catalyst in today's `memory/PREMARKET-CANDIDATES.json`.
 - Top 100 stocks by volume are a liquidity filter only; final candidates must come from TradingView MCP screening and must survive the market-open liquidity intersection.
 - New positions require a 10% trailing stop in paper/live-approved modes.

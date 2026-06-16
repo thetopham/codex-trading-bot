@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
 from decimal import Decimal, ROUND_DOWN
 from typing import Any, Iterable
 
@@ -100,42 +99,21 @@ class GateResult:
     reasons: tuple[str, ...]
 
 
-def _weekly_trade_count(trade_log_text: str) -> int:
-    # Count only submitted paper/new trade markers for the current ISO week.
-    current_year, current_week, _ = date.today().isocalendar()
-    count = 0
-    current_heading_date: date | None = None
-    for line in trade_log_text.splitlines():
-        if line.startswith("## ") and "—" in line:
-            maybe_date = line.rsplit("—", 1)[-1].strip()
-            try:
-                current_heading_date = date.fromisoformat(maybe_date)
-            except ValueError:
-                current_heading_date = None
-        if "Broker action: paper_submit buy_ok=True" in line or line.startswith("New trade:"):
-            if current_heading_date is None:
-                count += 1
-                continue
-            year, week, _ = current_heading_date.isocalendar()
-            if year == current_year and week == current_week:
-                count += 1
-    return count
-
-
 def validate_buy_gate(
     *,
     account: AccountState,
     positions: Iterable[Position],
     idea: TradeIdea,
     trade_log_text: str = "",
-    max_positions: int = 6,
-    max_trades_per_week: int = 3,
     max_portfolio_risk_pct: Decimal = Decimal("0.01"),
     stop_loss_pct: Decimal = Decimal("0.10"),
     max_daytrade_count_under_25k: int = 3,
 ) -> GateResult:
     reasons: list[str] = []
-    current_positions = list(positions)
+    # `positions` and `trade_log_text` are accepted for call-site compatibility and future
+    # portfolio analytics, but they no longer cap opportunity count. Risk is managed per
+    # position through stop-loss sizing and by the available-cash gate.
+    _ = (positions, trade_log_text)
 
     if idea.qty <= 0:
         reasons.append("invalid_quantity")
@@ -143,10 +121,6 @@ def validate_buy_gate(
         reasons.append("instrument_not_stock")
     if not idea.catalyst.strip():
         reasons.append("missing_documented_catalyst")
-    if len(current_positions) + 1 > max_positions:
-        reasons.append("too_many_open_positions_after_fill")
-    if _weekly_trade_count(trade_log_text) + 1 > max_trades_per_week:
-        reasons.append("weekly_trade_cap_exceeded")
     if account.equity <= 0:
         reasons.append("invalid_equity")
     else:

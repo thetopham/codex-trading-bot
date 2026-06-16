@@ -19,10 +19,9 @@ Safety boundary: Alpaca paper only unless explicitly changed later. Stocks only;
 - Treat MCP outputs as research data, not automatic trade commands.
 
 ## Hard Rules
-- Max 6 open positions.
+- Take every qualified TradingView MCP opportunity while cash is available and per-position risk gates pass; there is no fixed max-position or weekly-trade-count cap.
 - Max per-position risk: 1% of portfolio equity at the required 10% stop.
 - Position sizing formula: `floor((equity * 0.01 / 0.10) / entry_price)`, so a 10% stop risks at most ~1% of portfolio equity before slippage.
-- Max 3 new trades per week.
 - Every new position requires a documented TradingView MCP-backed catalyst in today's `memory/PREMARKET-CANDIDATES.json`.
 - Every new position gets a 10% GTC trailing stop in paper/live-approved modes.
 - Cut losers at -7%.
