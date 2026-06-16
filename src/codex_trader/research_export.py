@@ -34,8 +34,20 @@ def _candidate_schema(today: date) -> dict[str, object]:
                 "symbol": "NVDA",
                 "exchange": "NASDAQ",
                 "decision": "candidate",
-                "mcp_score": "0-100 score; optional because market-open can auto-score source evidence for ordering",
+                "mcp_score": "0-100 score; optional because market-open can auto-score successful source evidence for ordering",
                 "sources": ["volume_breakout"],
+                "mcp_checks": [
+                    {
+                        "tool": "volume_breakout",
+                        "status": "ok",
+                        "evidence": "One successful TradingView MCP technical setup; required for market-open gate",
+                    },
+                    {
+                        "tool": "multi_timeframe",
+                        "status": "retryable_error",
+                        "error": "Example only: Expecting value: line 1 column 1; log/retry, but do not count as evidence",
+                    },
+                ],
                 "catalyst": "Concrete TradingView MCP-backed technical setup; required for market-open gate",
                 "benchmark": {
                     "symbol": BENCHMARK_SYMBOL,
@@ -47,7 +59,7 @@ def _candidate_schema(today: date) -> dict[str, object]:
                     "relative_strength_5d_pct": "candidate_5d_pct - benchmark_5d_pct",
                     "outperformance_thesis": "Why this can beat SPY/SPX; market-open rejects generic beta trades without this.",
                 },
-                "notes": "Risks plus optional MCP confirmation/news/backtest context only when useful; do not require every MCP tool.",
+                "notes": "Risks plus optional MCP confirmation/news/backtest context only when useful; failed optional MCP checks should be marked retryable_error and not counted as evidence.",
             }
         ],
     }
@@ -89,6 +101,20 @@ def main() -> int:
                 "multiple scan agreement",
                 "both NYSE and NASDAQ scans every day",
             ],
+        },
+        "mcp_call_policy": {
+            "max_parallel_calls": 1,
+            "broad_scan_budget": "1-2 scanner calls total before liquidity intersection; do not fan out every MCP tool",
+            "finalist_budget": "Run combined_analysis or multi_timeframe only for the top 1-3 liquid finalists or to break ties",
+            "retry_attempts_for_retryable_errors": 2,
+            "retry_backoff_seconds": [10, 30],
+            "retryable_error_hints": [
+                "Expecting value: line 1 column 1",
+                "empty or non-JSON upstream response",
+                "HTTP 429 / Too Many Requests / rate limit",
+                "timeout or temporarily unavailable",
+            ],
+            "evidence_rule": "Only MCP checks with status=ok/constructive count as evidence. retryable_error/error checks are logged as health context and never add score.",
         },
         "mcp_score_guidance": {
             "scanner_hit": 25,

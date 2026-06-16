@@ -73,6 +73,55 @@ OUTPERFORMANCE_HINTS = (
     "ahead of spx",
 )
 PLACEHOLDER_THESIS_HINTS = ("tbd", "todo", "n/a", "none", "required", "placeholder")
+MCP_RETRYABLE_ERROR_HINTS = (
+    "expecting value: line 1 column 1",
+    "empty response",
+    "empty_or_non_json",
+    "non-json",
+    "non_json",
+    "invalid json",
+    "json parse",
+    "parser error",
+    "parse error",
+    "data error",
+    "data errors",
+    "timeout",
+    "timed out",
+    "temporarily unavailable",
+    "connection reset",
+    "too many requests",
+    "rate limit",
+    "rate_limited",
+    "429",
+)
+MCP_FAILED_STATUS_HINTS = (
+    "error",
+    "failed",
+    "failure",
+    "retryable_error",
+    "rate_limited",
+    "timeout",
+    "empty",
+)
+MCP_NEGATIVE_RECOMMENDATION_HINTS = (
+    "hold/no_trade",
+    "hold_no_trade",
+    "no_trade",
+    "wait_for_alignment",
+    "avoid",
+    "strong_sell",
+)
+MCP_CONSTRUCTIVE_HINTS = (
+    "bullish",
+    "buy",
+    "cautious_buy",
+    "lean_bullish",
+    "constructive",
+    "breakout",
+    "top_gainers",
+    "positive",
+    "price_above",
+)
 
 
 @dataclass(frozen=True)
@@ -123,8 +172,109 @@ def _split_sources(raw_sources: object) -> tuple[str, ...]:
         return ()
 
 
+def _normalized_text(value: object) -> str:
+    return str(value or "").lower().replace("-", "_").replace(" ", "_")
+
+
+def _mcp_tool_name(value: object) -> str:
+    return _normalized_text(value).replace("mcp_tradingview_", "").replace("tradingview_", "")
+
+
 def _haystack(sources: tuple[str, ...], catalyst: str, notes: str) -> str:
     return " ".join((*sources, catalyst, notes)).lower().replace("-", "_").replace(" ", "_")
+
+
+def is_retryable_mcp_error(text: object) -> bool:
+    """Return True for flaky TradingView/Yahoo/MCP upstream failures worth retrying.
+
+    The MCP server often surfaces empty upstream responses as JSON parser errors
+    instead of explicit HTTP status codes. Treat those as retryable health data,
+    not as bullish/bearish evidence.
+    """
+    haystack = _normalized_text(text).replace(":", "_").replace("/", "_")
+    return any(_normalized_text(hint).replace(":", "_").replace("/", "_") in haystack for hint in MCP_RETRYABLE_ERROR_HINTS)
+
+
+def _mcp_checks(raw: Mapping[str, object]) -> tuple[Mapping[str, object], ...]:
+    checks = raw.get("mcp_checks") or raw.get("tradingview_mcp_checks") or []
+    if isinstance(checks, Mapping):
+        # Accept either a single check object or a {tool: check} mapping.
+        if any(isinstance(v, Mapping) for v in checks.values()):
+            normalized: list[Mapping[str, object]] = []
+            for key, value in checks.items():
+                if isinstance(value, Mapping):
+                    enriched = dict(value)
+                    enriched.setdefault("tool", key)
+                    normalized.append(enriched)
+            return tuple(normalized)
+        return (checks,)
+    try:
+        return tuple(check for check in checks if isinstance(check, Mapping))  # type: ignore[union-attr]
+    except TypeError:
+        return ()
+
+
+def _mcp_check_text(check: Mapping[str, object]) -> str:
+    fields = (
+        "tool",
+        "source",
+        "status",
+        "summary",
+        "evidence",
+        "error",
+        "recommendation",
+        "action",
+        "notes",
+        "breakout_type",
+    )
+    return _normalized_text(" ".join(str(check.get(field) or "") for field in fields))
+
+
+def _mcp_check_failed(check: Mapping[str, object]) -> bool:
+    status = _normalized_text(check.get("status"))
+    text = _mcp_check_text(check)
+    return (
+        any(hint in status for hint in MCP_FAILED_STATUS_HINTS)
+        or is_retryable_mcp_error(text)
+        or "returned_all_timeframe_errors" in text
+    )
+
+
+def _mcp_check_negative(check: Mapping[str, object]) -> bool:
+    text = _mcp_check_text(check)
+    return any(hint in text for hint in MCP_NEGATIVE_RECOMMENDATION_HINTS) or "breakout_type_bearish" in text
+
+
+def _mcp_check_is_successful_setup(check: Mapping[str, object]) -> bool:
+    if _mcp_check_failed(check) or _mcp_check_negative(check):
+        return False
+    tool = _mcp_tool_name(check.get("tool") or check.get("source"))
+    text = _mcp_check_text(check)
+    if any(hint in tool or hint in text for hint in MCP_SCANNER_HINTS):
+        return True
+    if any(hint in tool or hint in text for hint in MCP_CONFIRMATION_HINTS):
+        return any(hint in text for hint in MCP_CONSTRUCTIVE_HINTS)
+    return ("mcp" in text or "tradingview" in text) and "technical" in text and any(
+        hint in text for hint in MCP_CONSTRUCTIVE_HINTS
+    )
+
+
+def _successful_mcp_setup_tools(raw: Mapping[str, object]) -> tuple[str, ...]:
+    tools: list[str] = []
+    for check in _mcp_checks(raw):
+        if _mcp_check_is_successful_setup(check):
+            tool = _mcp_tool_name(check.get("tool") or check.get("source") or "mcp")
+            tools.append(tool or "mcp")
+    return tuple(dict.fromkeys(tools))
+
+
+def _failed_mcp_tools(raw: Mapping[str, object]) -> tuple[str, ...]:
+    tools: list[str] = []
+    for check in _mcp_checks(raw):
+        if _mcp_check_failed(check):
+            tool = _mcp_tool_name(check.get("tool") or check.get("source") or "mcp")
+            tools.append(tool or "mcp")
+    return tuple(dict.fromkeys(tools))
 
 
 def _has_tradingview_mcp_evidence(sources: tuple[str, ...], catalyst: str, notes: str) -> bool:
@@ -133,11 +283,37 @@ def _has_tradingview_mcp_evidence(sources: tuple[str, ...], catalyst: str, notes
     We deliberately do not require combined_analysis + multi-timeframe + news + backtest.
     Those are optional score/context fields that may improve confidence, not veto points.
     """
-    haystack = _haystack(sources, catalyst, notes)
+    # Count source/catalyst as the successful-evidence surface. Notes often contain
+    # failed optional confirmations; those should not accidentally satisfy the hard gate.
+    haystack = _haystack(sources, catalyst, "")
     has_mcp_or_tradingview = "mcp" in haystack or "tradingview" in haystack
     has_named_setup = any(hint in haystack for hint in MCP_SCANNER_HINTS | MCP_CONFIRMATION_HINTS)
     has_technical_language = any(hint in haystack for hint in ("technical", "breakout", "bullish", "strong_buy", "buy"))
     return has_named_setup or (has_mcp_or_tradingview and has_technical_language)
+
+
+def _candidate_has_tradingview_mcp_evidence(raw: Mapping[str, object]) -> bool:
+    successful_tools = _successful_mcp_setup_tools(raw)
+    if successful_tools:
+        return True
+
+    catalyst = str(raw.get("catalyst") or raw.get("thesis") or raw.get("reason") or "").strip()
+    notes = str(raw.get("notes") or "").strip()
+    sources = _split_sources(raw.get("sources") or raw.get("mcp_sources") or [])
+    source_setup_tools = {
+        _mcp_tool_name(source)
+        for source in sources
+        if any(hint in _mcp_tool_name(source) for hint in MCP_SCANNER_HINTS | MCP_CONFIRMATION_HINTS)
+    }
+    failed_tools = set(_failed_mcp_tools(raw))
+    checked_setup_tools = {
+        _mcp_tool_name(check.get("tool") or check.get("source"))
+        for check in _mcp_checks(raw)
+        if any(hint in _mcp_tool_name(check.get("tool") or check.get("source")) for hint in MCP_SCANNER_HINTS | MCP_CONFIRMATION_HINTS)
+    }
+    if source_setup_tools and (source_setup_tools <= failed_tools or source_setup_tools <= checked_setup_tools):
+        return False
+    return _has_tradingview_mcp_evidence(sources, catalyst, notes)
 
 
 def _extract_benchmark_thesis(raw: Mapping[str, object]) -> str:
@@ -208,21 +384,36 @@ def _mcp_evidence_summary(raw: Mapping[str, object]) -> str:
     catalyst = str(raw.get("catalyst") or raw.get("thesis") or raw.get("reason") or "").strip()
     notes = str(raw.get("notes") or "").strip()
     sources = _split_sources(raw.get("sources") or raw.get("mcp_sources") or [])
-    haystack = _haystack(sources, catalyst, notes)
+    checks = _mcp_checks(raw)
+    successful_tools = _successful_mcp_setup_tools(raw)
     parts: list[str] = []
-    if any(hint in haystack for hint in MCP_SCANNER_HINTS):
+
+    if checks:
+        successful_haystack = " ".join(successful_tools)
+    else:
+        # Legacy candidate rows do not have structured check statuses. Use
+        # sources+catalyst as positive evidence and reserve notes for risk/errors.
+        successful_haystack = _haystack(sources, catalyst, "")
+
+    if any(hint in successful_haystack for hint in MCP_SCANNER_HINTS):
         parts.append("scanner_hit")
-    if "combined_analysis" in haystack:
+    if "combined_analysis" in successful_haystack:
         parts.append("combined_analysis")
-    if "multi_timeframe" in haystack:
+    if "multi_timeframe" in successful_haystack:
         parts.append("multi_timeframe")
-    if "volume_breakout" in haystack or "smart_volume" in haystack or "volume_confirmation" in haystack:
+    if "volume_breakout" in successful_haystack or "smart_volume" in successful_haystack or "volume_confirmation" in successful_haystack:
         parts.append("volume_confirmation")
-    if any(hint in haystack for hint in MCP_OPTIONAL_CONTEXT_HINTS):
+
+    full_haystack = _haystack(sources, catalyst, notes)
+    if any(hint in full_haystack for hint in MCP_OPTIONAL_CONTEXT_HINTS):
         parts.append("optional_context")
-    if any(hint in haystack for hint in MCP_RISK_WARNING_HINTS):
+    if any(hint in full_haystack for hint in MCP_RISK_WARNING_HINTS):
         parts.append("risk_warning")
-    return ",".join(parts) if parts else "single_mcp_setup"
+    failed_checks = [check for check in checks if _mcp_check_failed(check)]
+    retryable_text = " ".join(_mcp_check_text(check) for check in failed_checks) + " " + notes
+    if failed_checks or is_retryable_mcp_error(notes):
+        parts.append("retryable_mcp_error" if is_retryable_mcp_error(retryable_text) else "mcp_error")
+    return ",".join(dict.fromkeys(parts)) if parts else "single_mcp_setup"
 
 
 def _score_mcp_evidence(raw: Mapping[str, object]) -> Decimal:
@@ -230,16 +421,24 @@ def _score_mcp_evidence(raw: Mapping[str, object]) -> Decimal:
     catalyst = str(raw.get("catalyst") or raw.get("thesis") or raw.get("reason") or "").strip()
     notes = str(raw.get("notes") or "").strip()
     sources = _split_sources(raw.get("sources") or raw.get("mcp_sources") or [])
-    haystack = _haystack(sources, catalyst, notes)
+    checks = _mcp_checks(raw)
+    successful_tools = _successful_mcp_setup_tools(raw)
+    if checks:
+        success_haystack = " ".join(successful_tools)
+    else:
+        # Legacy rows: count source/catalyst as positive evidence, but do not
+        # award confirmation points for failed optional checks mentioned in notes.
+        success_haystack = _haystack(sources, catalyst, "")
+    full_haystack = _haystack(sources, catalyst, notes)
     score = Decimal("0")
 
-    if any(hint in haystack for hint in MCP_SCANNER_HINTS):
+    if any(hint in success_haystack for hint in MCP_SCANNER_HINTS):
         score += Decimal("25")
-    if "combined_analysis" in haystack:
+    if "combined_analysis" in success_haystack:
         score += Decimal("25")
-    if "multi_timeframe" in haystack:
+    if "multi_timeframe" in success_haystack:
         score += Decimal("15")
-    if "volume_breakout" in haystack or "smart_volume" in haystack or "volume_confirmation" in haystack:
+    if "volume_breakout" in success_haystack or "smart_volume" in success_haystack or "volume_confirmation" in success_haystack:
         score += Decimal("15")
 
     rel_1d = _extract_relative_strength(raw, "relative_strength_1d_pct")
@@ -251,11 +450,11 @@ def _score_mcp_evidence(raw: Mapping[str, object]) -> Decimal:
 
     if len(catalyst) >= 25:
         score += Decimal("10")
-    if any(hint in haystack for hint in ("financial_news", "market_sentiment", "news", "catalyst")):
+    if any(hint in full_haystack for hint in ("financial_news", "market_sentiment", "news", "catalyst")):
         score += Decimal("10")
-    if any(hint in haystack for hint in ("backtest", "walk_forward", "compare_strategies")):
+    if any(hint in full_haystack for hint in ("backtest", "walk_forward", "compare_strategies")):
         score += Decimal("10")
-    if any(hint in haystack for hint in MCP_RISK_WARNING_HINTS):
+    if any(hint in full_haystack for hint in MCP_RISK_WARNING_HINTS):
         score -= Decimal("20")
 
     return max(Decimal("0"), min(Decimal("100"), score))
@@ -283,7 +482,7 @@ def _candidate_rejection_reasons(raw: Mapping[str, object]) -> tuple[str, ...]:
         reasons.append("not_trade_decision")
     if not catalyst:
         reasons.append("missing_documented_catalyst")
-    if not _has_tradingview_mcp_evidence(sources, catalyst, notes):
+    if not _candidate_has_tradingview_mcp_evidence(raw):
         reasons.append("missing_tradingview_mcp_setup")
     if not _valid_benchmark_thesis(benchmark_thesis):
         reasons.append("missing_spy_outperformance_thesis")
@@ -370,7 +569,8 @@ def empty_candidate_payload(today: date | None = None) -> dict[str, object]:
         "date": today.isoformat(),
         "source": "TradingView MCP screening over top-100-volume liquidity filter",
         "liquidity_filter": "generated by python -m codex_trader.research_export",
-        "mcp_requirement": "One TradingView MCP technical setup is enough; additional MCP tools are score/context, not hard gates.",
+        "mcp_requirement": "One successful TradingView MCP technical setup is enough; failed/retryable MCP checks are health context only and do not count as evidence.",
+        "mcp_retry_policy": "Call MCP serially, use 1-2 broad scans, retry parser/empty-response/429-style errors with 10-30s backoff, then fail closed if no successful setup remains.",
         "benchmark_requirement": "Each candidate must include a SPY/SPX outperformance thesis; market-open rejects benchmark-free beta trades.",
         "candidates": [],
     }

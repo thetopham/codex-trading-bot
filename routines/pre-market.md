@@ -37,6 +37,30 @@ Pick one of these paths; do not run every tool by default:
 - **Known-name path:** for high-priority/forced watchlist names, call `mcp_tradingview_combined_analysis(symbol, exchange, timeframe="1D")` directly.
 - **Optional confirmation:** use `multi_timeframe`, news/sentiment, or backtest/walk-forward only when it materially changes conviction or breaks a tie.
 
+## MCP reliability / rate-limit policy
+
+TradingView MCP sometimes returns transient parser shapes such as `Expecting value: line 1 column 1`, empty/non-JSON upstream responses, timeouts, or explicit `429`/rate-limit messages. Treat these as **retryable health events**, not as bearish/bullish evidence.
+
+Operational rules:
+
+1. **No burst fan-out.** Do not call many MCP tools in parallel. Keep `max_parallel_calls=1` for TradingView MCP during pre-market.
+2. **Small call budget.** Run only 1–2 broad scanner calls before liquidity intersection. Run `combined_analysis` or `multi_timeframe` only for the top 1–3 liquid finalists or to break ties.
+3. **Retry only retryable errors.** If an MCP call returns `Expecting value`, empty/non-JSON content, timeout, or 429/rate-limit text, wait 10–30 seconds and retry at most twice.
+4. **Do not count failed checks as evidence.** A failed optional `multi_timeframe`/`combined_analysis` check should be logged as `retryable_error` and must not add score or satisfy the MCP hard gate.
+5. **Do not veto a proven setup because optional context failed.** If one successful scanner/setup exists, failed optional checks are risk/health context only.
+6. **Fail closed if no successful setup exists.** If every MCP check failed or returned HOLD/NO TRADE, write an empty candidate file and state HOLD.
+
+Use structured `mcp_checks` in candidate JSON when possible:
+
+```json
+"mcp_checks": [
+  {"tool": "top_gainers", "status": "ok", "evidence": "1D top-gainer hit with liquid volume"},
+  {"tool": "multi_timeframe", "status": "retryable_error", "error": "Expecting value: line 1 column 1"}
+]
+```
+
+Only checks with `status: "ok"` / constructive evidence count as successful MCP evidence.
+
 ## MCP score guidance
 
 Use this as a scoring model, not as hard gates:
@@ -64,7 +88,7 @@ The Python market-open loader does **not** require every score component. It onl
 
 Append `memory/RESEARCH-LOG.md` with:
 - source summary: top-100-volume liquidity filter + simplified TradingView MCP screen
-- which 1–2 MCP checks were used and notable rejected low-liquidity hits
+- which 1–2 MCP checks were used, retryable MCP errors/retries, and notable rejected low-liquidity hits
 - SPY/SPX benchmark context and the reason each candidate can beat the benchmark rather than merely move with market beta
 - final candidate trade ideas with ticker, MCP evidence, score, catalyst/technical reason, entry reference, 10% trailing-stop discipline, approx 2:1 target, risks, and HOLD/candidate decision
 - explicit note that market-open must revalidate deterministic gates before paper order submission.
@@ -82,6 +106,10 @@ Overwrite `memory/PREMARKET-CANDIDATES.json` with machine-readable final candida
       "decision": "candidate",
       "mcp_score": "75",
       "sources": ["volume_breakout"],
+      "mcp_checks": [
+        {"tool": "volume_breakout", "status": "ok", "evidence": "One successful TradingView MCP technical setup"},
+        {"tool": "multi_timeframe", "status": "retryable_error", "error": "Optional retryable parser/empty-response failure, if any"}
+      ],
       "catalyst": "Concrete TradingView MCP-backed technical setup required by market-open gate",
       "benchmark": {
         "symbol": "SPY",

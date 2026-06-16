@@ -16,7 +16,7 @@ Safety boundary: Alpaca paper only unless explicitly changed later. Stocks only;
 - Primary liquidity filter: top 100 US equities by traded volume using Yahoo Finance/yfinance `most_actives`, plus forced watchlist symbols when needed.
 - Top-volume is not the alpha engine; it only decides whether a name is liquid enough to consider.
 - Primary alpha/screening layer: `atilaahmettaner/tradingview-mcp` via Hermes MCP tools.
-- Use TradingView MCP for top gainers/losers, volume breakouts, smart volume, Bollinger/rating filters, combined analysis, multi-timeframe analysis, news/sentiment where useful, and SPY/SPX benchmark context.
+- Use TradingView MCP for a lean technical screen: 1–2 broad scans first, then optional combined/multi-timeframe checks only for top liquid finalists. Treat parser/empty-response/429 failures as retryable health events; failed optional checks do not count as evidence or score.
 - Optional Perplexity research may add cited macro/news/catalyst context like the original Opus guide, but TradingView MCP remains the technical screener and deterministic gates still own execution.
 - Write final pre-market trade candidates to `memory/PREMARKET-CANDIDATES.json`; market-open must order only from that file after intersecting with the current top-volume liquidity filter.
 - Treat MCP outputs as research data, not automatic trade commands.

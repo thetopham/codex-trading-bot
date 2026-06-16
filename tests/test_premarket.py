@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from codex_trader.premarket import filter_signals_by_liquidity, load_premarket_signals, normalize_symbol
+from codex_trader.premarket import filter_signals_by_liquidity, is_retryable_mcp_error, load_premarket_signals, normalize_symbol
 from codex_trader.research import Candidate
 
 
@@ -173,3 +173,89 @@ def test_single_mcp_setup_is_enough_and_optional_context_is_only_scoring(tmp_pat
     assert "volume_confirmation" in signals[0].mcp_evidence_summary
     assert signals[1].mcp_score > 0
     assert "combined_analysis" in signals[1].mcp_evidence_summary
+
+
+def test_retryable_mcp_errors_do_not_count_as_successful_confirmations(tmp_path):
+    memory = tmp_path / "memory"
+    memory.mkdir()
+    (memory / "PREMARKET-CANDIDATES.json").write_text(
+        """
+        {
+          "date": "2026-06-16",
+          "candidates": [
+            {
+              "symbol": "HIMS",
+              "decision": "candidate",
+              "sources": ["top_gainers"],
+              "catalyst": "TradingView MCP top_gainers screen shows a bullish liquid setup",
+              "notes": "Optional multi_timeframe returned data errors and should be logged as retryable context only.",
+              "mcp_checks": [
+                {"tool": "top_gainers", "status": "ok", "evidence": "1D top gainer with constructive price action"},
+                {"tool": "multi_timeframe", "status": "retryable_error", "error": "Expecting value: line 1 column 1 (char 0)"}
+              ],
+              "benchmark": {
+                "symbol": "SPY",
+                "relative_strength_1d_pct": "5.30",
+                "relative_strength_5d_pct": "15.37",
+                "outperformance_thesis": "HIMS can outperform SPY because it has stronger relative strength than the benchmark and a liquid MCP top-gainer setup."
+              }
+            }
+          ]
+        }
+        """
+    )
+
+    signals, status = load_premarket_signals(tmp_path, today=date(2026, 6, 16))
+
+    assert status == "ok"
+    assert [s.symbol for s in signals] == ["HIMS"]
+    assert "scanner_hit" in signals[0].mcp_evidence_summary
+    assert "retryable_mcp_error" in signals[0].mcp_evidence_summary
+    assert "multi_timeframe" not in signals[0].mcp_evidence_summary
+    assert signals[0].mcp_score == Decimal("55")
+
+
+def test_only_failed_mcp_checks_are_rejected_even_when_source_names_a_setup(tmp_path):
+    memory = tmp_path / "memory"
+    memory.mkdir()
+    (memory / "PREMARKET-CANDIDATES.json").write_text(
+        """
+        {
+          "date": "2026-06-16",
+          "candidates": [
+            {
+              "symbol": "FLAKE",
+              "decision": "candidate",
+              "sources": ["combined_analysis"],
+              "catalyst": "TradingView MCP combined_analysis was attempted for this liquid name",
+              "mcp_checks": [
+                {"tool": "combined_analysis", "status": "retryable_error", "error": "Expecting value: line 1 column 1 (char 0)"}
+              ],
+              "benchmark_thesis": "FLAKE can outperform SPY if a valid setup appears, but this row intentionally lacks successful MCP evidence."
+            },
+            {
+              "symbol": "NEUTRAL",
+              "decision": "candidate",
+              "sources": ["combined_analysis"],
+              "catalyst": "TradingView MCP combined_analysis returned a neutral read without a constructive setup",
+              "mcp_checks": [
+                {"tool": "combined_analysis", "status": "ok", "evidence": "Technical NEUTRAL conflicts with neutral sentiment"}
+              ],
+              "benchmark_thesis": "NEUTRAL can outperform SPY only if a valid setup appears, but this row intentionally lacks successful MCP evidence."
+            }
+          ]
+        }
+        """
+    )
+
+    signals, status = load_premarket_signals(tmp_path, today=date(2026, 6, 16))
+
+    assert signals == []
+    assert "FLAKE:missing_tradingview_mcp_setup" in status
+    assert "NEUTRAL:missing_tradingview_mcp_setup" in status
+
+
+def test_retryable_mcp_error_detector_catches_parse_and_rate_limit_shapes():
+    assert is_retryable_mcp_error("Expecting value: line 1 column 1 (char 0)")
+    assert is_retryable_mcp_error("HTTP 429 Too Many Requests / rate limit")
+    assert is_retryable_mcp_error("TradingView returned empty_or_non_json response")
