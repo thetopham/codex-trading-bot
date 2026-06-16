@@ -437,3 +437,30 @@ Research source: Yahoo Finance daily OHLCV via `yfinance`; universe is a static 
 
 ### Default decision
 HOLD unless market-open revalidation confirms a candidate and risk gates pass.
+
+## Pre-market Research — 2026-06-16
+
+Research source: `python -m codex_trader.research_export` supplied the top-100-volume liquidity filter; TradingView MCP was used as the required alpha/technical screen. Perplexity was attempted through `scripts/perplexity.sh`, but the API returned HTTP 401, so it was not used as corroboration. TradingView MCP financial news returned 0 stock items.
+
+### Liquidity filter context
+- The liquidity universe contained 100 symbols. Leading liquid names included AAL, INTC, NOK, NVDA, SMCI, GRAB, SOFI, PATH, NU, TSLA, plus high-momentum liquid references such as HIMS, HOOD, NCLH, CCL, UBER, FRMI, HBAN, TFC, and CAG.
+- Hard gate applied: MCP hits had to normalize to a symbol in today's `liquidity_symbols`; Yahoo/yfinance momentum scores alone were not accepted as catalysts.
+
+### TradingView MCP scans used
+- NASDAQ: `top_gainers(1D)`, `volume_breakout_scanner(1D)`, `smart_volume_scanner`, `rating_filter(1D, rating=3)`, `rating_filter(1D, rating=2)`, and `bollinger_scan(1D)`.
+- NYSE: same broad scan set was attempted. `top_gainers`, `volume_breakout_scanner`, `smart_volume_scanner`, and both rating filters returned empty result sets; NYSE Bollinger returned a parse error (`Expecting value: line 1 column 1`).
+- Additional MCP validation attempted on liquid/high-momentum names: `combined_analysis` for HIMS, INTC, HOOD, NCLH, and CCL; `multi_timeframe_analysis` for HIMS, INTC, and HOOD. The combined-analysis technical block failed with parser errors for all checked symbols; multi-timeframe returned all timeframe errors and a HOLD/NO TRADE recommendation for HIMS, INTC, and HOOD.
+
+### Rejected MCP hits / liquidity intersection
+- Broad NASDAQ MCP hits did not intersect with today's top-100-volume liquidity filter, so they were rejected even when TradingView output looked strong.
+- Examples rejected because they were absent from today's `liquidity_symbols`: INHD, PRFX, RIBBU, QH, ARQQ, MTEN, VSME, NTLA, HUBC, WLDS, GLXG, ADTX, COSM, ARM, DASH, WDC, ABNB, BKNG.
+- No MCP scanner hit both (a) bullish/constructive TradingView evidence and (b) today's liquidity-symbol membership.
+
+### SPY/SPX benchmark context
+- SPY proxy from Yahoo/MCP: 754.83, +2.31% vs prior close.
+- S&P 500 / `^GSPC`: 7554.29, +2.16%.
+- Nasdaq Composite: +3.39%; VIX: 16.13, -0.43%.
+- With SPY/SPX already strongly bid and no liquid single-name setup surviving the MCP gate, forcing a trade would not have a documented reason to outperform the benchmark over the swing window.
+
+### Final candidate ideas
+HOLD. No liquid TradingView MCP-backed candidate qualified for 2026-06-16, so `memory/PREMARKET-CANDIDATES.json` was written with an empty `candidates` array. Market-open should have nothing to consider unless a later run produces a valid MCP-backed candidate.
