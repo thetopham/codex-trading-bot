@@ -161,3 +161,26 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Alpha vs SPY: 0.00%
 - Drawdown: 0.00%
 - Judgment: BASELINE: first benchmark row recorded; judge alpha after the next EOD snapshot.
+
+
+## EOD Snapshot — 2026-06-16
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "193879.86", "cash": "45018.39", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "193879.86", "equity": "49949.21", "long_market_value": "4930.82", "pattern_day_trader": false, "portfolio_value": "49949.21", "position_market_value": "4930.82", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[{"avg_entry_price": "31.73", "current_price": "31.4065", "market_value": "4930.8205", "qty": "157", "symbol": "HIMS", "unrealized_pl": "-50.7895", "unrealized_plpc": "-0.0102"}]
+```
+
+### Benchmark
+- Benchmark: SPY close $750.33
+- Bot daily return: 0.00%
+- SPY daily return: 0.00%
+- Bot cumulative return: 0.00%
+- SPY cumulative return: 0.00%
+- Alpha vs SPY: 0.00%
+- Drawdown: 0.00%
+- Judgment: BASELINE: first benchmark row recorded; judge alpha after the next EOD snapshot.

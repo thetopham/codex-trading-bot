@@ -7,10 +7,10 @@ Benchmark: SPY
 
 | Metric | Value |
 |---|---:|
-| Bot equity | $49998.43 |
+| Bot equity | $49949.21 |
 | Cash | $45018.39 |
-| Exposure | +9.96% |
-| SPY close | $752.17 |
+| Exposure | +9.87% |
+| SPY close | $750.33 |
 | Bot daily return | 0.00% |
 | SPY daily return | 0.00% |
 | Bot cumulative return | 0.00% |
@@ -27,4 +27,4 @@ Benchmark: SPY
 
 | Date | Bot % | Benchmark % | Alpha | Drawdown | Exposure |
 |---|---:|---:|---:|---:|---:|
-| 2026-06-16 | 0.00% | 0.00% | 0.00% | 0.00% | +9.96% |
+| 2026-06-16 | 0.00% | 0.00% | 0.00% | 0.00% | +9.87% |
