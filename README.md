@@ -44,7 +44,9 @@ src/codex_trader/
   cli.py                  # CLI commands
   benchmark.py            # bot-vs-SPY ledger/report/judgment logic
   research.py             # top-volume Yahoo Finance scanner and candidate renderer
+  split_tests.py          # shadow split-test variant loader/validator
   memory.py               # markdown memory helpers
+configs/split_tests/      # shadow-only strategy variants; never submit broker orders
 memory/                   # git-backed agent memory
 routines/                 # Hermes cron prompt templates
 .claude/commands/         # compatibility aliases for local slash-style docs
@@ -61,6 +63,7 @@ codex-trader midday-scan             # dry-run action scan from positions
 codex-trader daily-summary           # append EOD snapshot, SPY benchmark row/report, Telegram/fallback notify
 codex-trader benchmark-report        # manual/backfill bot-vs-SPY ledger/report update
 codex-trader weekly-review           # append weekly benchmark judgment to WEEKLY-REVIEW.md
+codex-trader split-tests             # list shadow split-test variants and sizing math
 ```
 
 ## Automation Runner
@@ -105,6 +108,22 @@ codex-trader benchmark-report --date 2026-06-16 --equity 50000 --cash 25000 --be
 ```
 
 The market-open step submits Alpaca **paper** broker orders only when `PAPER_ORDER_SUBMISSION=true` and the runner has switched `DRY_RUN=false` for the market-open workflow. It sizes each approved candidate so the required 10% trailing stop risks at most 1% of current portfolio equity: `qty = floor((equity * 0.01 / 0.10) / reference_price)`. It then buys approved candidates and immediately attempts a 10% GTC trailing stop. Other workflows force `DRY_RUN=true`.
+
+## Shadow Split Tests
+
+The repo now defines two additional shadow-only split-test variants under `configs/split_tests/`. They are research/farm configs, not broker-backed bots: `execution.mode = "shadow_paper"` and `broker.submit_orders = false` are required by the validator.
+
+| Variant | What it tests | Risk model |
+|---|---|---|
+| `opus_original_hermes_codex_perplexity` | Hermes/Codex translation of the original Opus 4.7 bot with Perplexity-led research and the simple objective: beat SPX/SPY. | Original 20% of account per position with a 10% trailing stop, so stop risk is about 2% of account equity per position. |
+| `opus_original_hermes_codex_perplexity_1pct_risk` | Same research/objective/operator stack as the original variant. | Position size is reduced so a 10% stop risks at most 1% of account equity. |
+
+Preview the variant sizing math:
+
+```bash
+codex-trader split-tests --equity 50000
+codex-trader split-tests --equity 50000 --json
+```
 
 ## Suggested Hermes Cron Mapping
 

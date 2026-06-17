@@ -1,0 +1,32 @@
+id = "opus_original_hermes_codex_perplexity"
+name = "Opus Original — Hermes/Codex + Perplexity"
+description = "Hermes/Codex translation of the original Opus 4.7 bot: Perplexity-led research, simple objective to beat SPX/SPY, original position/risk caps. Shadow-only split test."
+enabled = true
+objective = "beat_spx"
+operator_stack = ["Hermes", "Codex"]
+
+[benchmark]
+symbol = "SPY"
+method = "SPY total-return proxy when SPX index data is unavailable"
+
+[research]
+primary = "perplexity"
+allow_fallback = true
+require_citations = true
+notes = "Use Perplexity for cited macro/news/catalyst research like the original guide. TradingView MCP may be logged as optional technical context, but this variant's research driver is Perplexity."
+
+[risk]
+position_sizing = "equity_pct_cap"
+max_open_positions = 6
+max_new_trades_per_week = 3
+max_position_equity_pct = "0.20"
+stop_loss_pct = "0.10"
+target_deployed_equity_pct_min = "0.75"
+target_deployed_equity_pct_max = "0.85"
+
+[execution]
+mode = "shadow_paper"
+ledger_path = "local_state/split_tests/opus_original_hermes_codex_perplexity/ledger.jsonl"
+
+[broker]
+submit_orders = false

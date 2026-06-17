@@ -28,6 +28,7 @@ Open these before action:
 - Tighten trailing stop to 7% at +15%, 5% at +20%.
 - Telegram notifications only: no ClickUp.
 - Use `scripts/alpaca.sh`, `codex-trader pre-market-research`, and `scripts/telegram.sh`; do not call broker/notification APIs directly.
+- Split-test variants in `configs/split_tests/` are shadow-only research/farm configs. They must never submit broker orders; only the main paper config may place Alpaca paper orders.
 
 ## Codex/Hermes Workflow
 - Hermes cron jobs can schedule the routines in `routines/` with `workdir` set to this repo.

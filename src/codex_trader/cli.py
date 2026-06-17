@@ -27,6 +27,7 @@ from .rules import (
     validate_buy_gate,
 )
 from .sanitize import account_summary, positions_summary
+from .split_tests import load_split_test_variants, render_variants_table, variants_to_json
 from .wrappers import run_script
 
 
@@ -170,6 +171,8 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
             if result.buy_ok:
                 submitted.append(c.symbol)
             broker_action = f"paper_submit buy_ok={result.buy_ok} trailing_stop_ok={result.stop_ok} qty={result.qty}"
+            if not result.stop_ok:
+                broker_action += f" stop_response={result.stop_response[:300]}"
         lines += [
             f"### {c.symbol} — {status}",
             f"- Qty: {qty}",
@@ -277,6 +280,16 @@ def cmd_weekly_review(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_split_tests(args: argparse.Namespace) -> int:
+    variants = load_split_test_variants(_root())
+    equity = Decimal(args.equity)
+    if args.json:
+        print(variants_to_json(variants, equity=equity))
+    else:
+        print(render_variants_table(variants, equity=equity))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="codex-trader")
     sub = p.add_subparsers(required=True)
@@ -329,6 +342,11 @@ def build_parser() -> argparse.ArgumentParser:
     weekly = sub.add_parser("weekly-review")
     weekly.add_argument("--date", default="")
     weekly.set_defaults(func=cmd_weekly_review)
+
+    split_tests = sub.add_parser("split-tests")
+    split_tests.add_argument("--equity", default="10000", help="equity to use for sizing preview")
+    split_tests.add_argument("--json", action="store_true", help="emit machine-readable variant summary")
+    split_tests.set_defaults(func=cmd_split_tests)
     return p
 
 

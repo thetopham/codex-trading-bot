@@ -1,0 +1,33 @@
+id = "opus_original_hermes_codex_perplexity_1pct_risk"
+name = "Opus Original — Hermes/Codex + Perplexity + 1% Account Risk"
+description = "Same Perplexity-led, SPX-beating objective as the original Opus translation, but position size is capped so a 10% stop can lose at most 1% of account equity. Shadow-only split test."
+enabled = true
+objective = "beat_spx"
+operator_stack = ["Hermes", "Codex"]
+
+[benchmark]
+symbol = "SPY"
+method = "SPY total-return proxy when SPX index data is unavailable"
+
+[research]
+primary = "perplexity"
+allow_fallback = true
+require_citations = true
+notes = "Keep the same Perplexity-led research process as the original split test so the only intended variable is risk sizing."
+
+[risk]
+position_sizing = "account_risk"
+max_account_risk_pct = "0.01"
+max_open_positions = 6
+max_new_trades_per_week = 3
+max_position_equity_pct = "0.20"
+stop_loss_pct = "0.10"
+target_deployed_equity_pct_min = "0.75"
+target_deployed_equity_pct_max = "0.85"
+
+[execution]
+mode = "shadow_paper"
+ledger_path = "local_state/split_tests/opus_original_hermes_codex_perplexity_1pct_risk/ledger.jsonl"
+
+[broker]
+submit_orders = false

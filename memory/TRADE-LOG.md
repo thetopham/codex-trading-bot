@@ -208,3 +208,10 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Relative strength vs SPY: 1D 2.44%, 5D 4.84%
 - Gate reasons: none
 - Broker action: paper_submit buy_ok=True trailing_stop_ok=False qty=261.
+
+## Stop Repair — 2026-06-17T15:52:04Z
+
+- CPNG paper position was open with 261 shares and no open protective sell stop.
+- Cause: market-open buy succeeded, but the immediate trailing-stop submit returned `trailing_stop_ok=False`; no CPNG stop order existed in Alpaca open orders.
+- Repair submitted a 10% GTC trailing stop for 261 CPNG shares.
+- Alpaca paper stop order: `a5fbce82-68e4-48b3-8d6d-1b5bdee52e88`, status `new`, HWM 19.345, stop_price 17.4105.
