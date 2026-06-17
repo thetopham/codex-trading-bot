@@ -184,3 +184,27 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Alpha vs SPY: 0.00%
 - Drawdown: 0.00%
 - Judgment: BASELINE: first benchmark row recorded; judge alpha after the next EOD snapshot.
+
+## Market-open TradingView MCP Candidates — 2026-06-17
+
+- Candidate source: memory/PREMARKET-CANDIDATES.json
+- Candidate file status: ok
+- Liquidity filter: current top 59 stocks by reported volume
+- Liquidity skips: HIMS:not_in_top_volume_liquidity_filter
+
+### CPNG — APPROVED_DRY_RUN
+- Qty: 261
+- Reference price: 19.08
+- Estimated cost: 4979.88
+- Risk at 10% stop: 497.9880
+- Stop: 10% trailing stop; paper order uses trail_percent=10
+- Target: 22.90
+- MCP score: 65
+- MCP evidence summary: scanner_hit,optional_context,retryable_mcp_error
+- MCP sources: top_gainers, compare_strategies
+- MCP notes: SPY/SPX relative thesis: CPNG has MCP-confirmed top-gainer/upper-band expansion and positive 1D/5D relative strength versus a red SPY benchmark. Risks: CPNG's relative strength is weaker than HIMS, news/RSS returned no corroborating catalyst, and optional combined/multi-timeframe MCP checks hit retryable parser failures and did not add score. Perplexity optional corroboration failed with HTTP 401.
+- Catalyst: TradingView MCP top_gainers 1D NYSE scan found CPNG +4.948% with close 18.03 above SMA20 16.22/EMA50 17.53 and above BB_upper 17.76, RSI 57.90, volume 23.3M.
+- Benchmark thesis: CPNG can outperform SPY/SPX over the swing window because it has a TradingView MCP top-gainer upper-band expansion while SPY is negative on both 1D and 5D, and the liquidity filter shows CPNG positive relative strength versus SPY on both windows (+2.44% 1D and +4.84% 5D); the thesis is benchmark-relative momentum, not broad market beta.
+- Relative strength vs SPY: 1D 2.44%, 5D 4.84%
+- Gate reasons: none
+- Broker action: paper_submit buy_ok=True trailing_stop_ok=False qty=261.
