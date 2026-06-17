@@ -215,3 +215,26 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Cause: market-open buy succeeded, but the immediate trailing-stop submit returned `trailing_stop_ok=False`; no CPNG stop order existed in Alpaca open orders.
 - Repair submitted a 10% GTC trailing stop for 261 CPNG shares.
 - Alpaca paper stop order: `a5fbce82-68e4-48b3-8d6d-1b5bdee52e88`, status `new`, HWM 19.345, stop_price 17.4105.
+
+
+## EOD Snapshot — 2026-06-17
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "187938.6", "cash": "40034.96", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "187938.6", "equity": "49963.09", "long_market_value": "9928.13", "pattern_day_trader": false, "portfolio_value": "49963.09", "position_market_value": "9928.13", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[{"avg_entry_price": "19.093563", "current_price": "18.88", "market_value": "4927.68", "qty": "261", "symbol": "CPNG", "unrealized_pl": "-55.739943", "unrealized_plpc": "-0.01119"}, {"avg_entry_price": "31.73", "current_price": "31.85", "market_value": "5000.45", "qty": "157", "symbol": "HIMS", "unrealized_pl": "18.84", "unrealized_plpc": "0.00378"}]
+```
+
+### Benchmark
+- Benchmark: SPY close $740.96
+- Bot daily return: +0.03%
+- SPY daily return: -1.25%
+- Bot cumulative return: +0.03%
+- SPY cumulative return: -1.25%
+- Alpha vs SPY: +1.28%
+- Drawdown: 0.00%
+- Judgment: AHEAD: Codex is beating SPY by +1.28% cumulative alpha.
