@@ -1,25 +1,104 @@
 {
-  "date": "2026-06-16",
-  "source": "TradingView MCP simplified screen over top-100-volume liquidity filter",
+  "date": "2026-06-17",
+  "source": "TradingView MCP screening over top-100-volume liquidity filter",
   "candidates": [
     {
       "symbol": "HIMS",
       "exchange": "NYSE",
       "decision": "candidate",
       "mcp_score": "65",
-      "sources": ["top_gainers"],
-      "catalyst": "TradingView MCP top_gainers screen shows HIMS +6.304% on the 1D scan with RSI ~64.36 and volume ~16.0M; current Yahoo quote is 31.69, +5.04% on the day.",
+      "sources": [
+        "top_gainers",
+        "compare_strategies"
+      ],
+      "catalyst": "TradingView MCP top_gainers 1D NYSE scan found HIMS +4.970% with close 31.47 above SMA20 26.60/EMA50 26.15 and slightly above BB_upper 31.30, RSI 63.56, volume 22.1M.",
       "benchmark": {
         "symbol": "SPY",
-        "candidate_1d_pct": "4.94",
-        "benchmark_1d_pct": "-0.36",
-        "relative_strength_1d_pct": "5.30",
-        "candidate_5d_pct": "15.08",
-        "benchmark_5d_pct": "-0.28",
-        "relative_strength_5d_pct": "15.37",
-        "outperformance_thesis": "HIMS can beat SPY over the swing window because it is showing strong positive relative strength versus a slightly red SPY tape, has a liquid top-volume profile, and has a confirmed TradingView MCP top-gainer technical setup rather than a generic market-beta move."
+        "candidate_1d_pct": "12.49",
+        "benchmark_1d_pct": "-0.60",
+        "relative_strength_1d_pct": "13.09",
+        "candidate_5d_pct": "9.67",
+        "benchmark_5d_pct": "-0.52",
+        "relative_strength_5d_pct": "10.19",
+        "outperformance_thesis": "HIMS can outperform SPY/SPX over the swing window because it has a fresh TradingView MCP top-gainer technical breakout/upper-band expansion while SPY is down 0.60% over 1D and 0.52% over 5D, and the liquidity filter shows HIMS +13.09% 1D and +10.19% 5D relative strength versus SPY; this is stock-specific relative strength rather than generic market beta."
       },
-      "notes": "Simplified gate test candidate: one MCP technical setup plus liquidity plus SPY-relative strength. Optional multi-timeframe MCP returned data errors/low-confidence HOLD, so treat that as a risk note rather than a hard veto. Use 10% trailing stop and 1% portfolio-risk sizing."
+      "mcp_checks": [
+        {
+          "tool": "top_gainers",
+          "status": "ok",
+          "evidence": "NYSE 1D top_gainers: +4.970%, close 31.47, RSI 63.56, volume 22,076,132; close above SMA20/EMA50 and slightly above upper Bollinger band."
+        },
+        {
+          "tool": "combined_analysis",
+          "status": "retryable_error",
+          "error": "Technical analysis failed after retry with Expecting value: line 1 column 1 (char 0); neutral/0-post sentiment and 0 news items are not counted as evidence."
+        },
+        {
+          "tool": "multi_timeframe",
+          "status": "retryable_error",
+          "error": "All timeframe subchecks returned Expecting value parser errors; HOLD action from empty/error data is logged as health context only and not counted as evidence."
+        },
+        {
+          "tool": "financial_news",
+          "status": "ok",
+          "evidence": "Financial news RSS returned 0 HIMS items; no news corroboration counted."
+        },
+        {
+          "tool": "compare_strategies",
+          "status": "ok",
+          "evidence": "6mo daily compare_strategies winner MACD +56.45% over 2 trades vs buy-and-hold -10.01%; optional context only, past performance is not predictive."
+        }
+      ],
+      "notes": "SPY/SPX relative thesis: HIMS is showing clear positive relative strength versus a red SPY benchmark and an MCP top-gainers technical setup. Risks: HIMS is already an open paper position from 2026-06-16, so market-open must avoid aggregate HIMS risk above the 1% per-position rule and must verify/repair the 10% trailing stop before any add. Optional combined/multi-timeframe MCP checks hit retryable parser failures and did not add score. Perplexity optional corroboration failed with HTTP 401."
+    },
+    {
+      "symbol": "CPNG",
+      "exchange": "NYSE",
+      "decision": "candidate",
+      "mcp_score": "65",
+      "sources": [
+        "top_gainers",
+        "compare_strategies"
+      ],
+      "catalyst": "TradingView MCP top_gainers 1D NYSE scan found CPNG +4.948% with close 18.03 above SMA20 16.22/EMA50 17.53 and above BB_upper 17.76, RSI 57.90, volume 23.3M.",
+      "benchmark": {
+        "symbol": "SPY",
+        "candidate_1d_pct": "1.84",
+        "benchmark_1d_pct": "-0.60",
+        "relative_strength_1d_pct": "2.44",
+        "candidate_5d_pct": "4.32",
+        "benchmark_5d_pct": "-0.52",
+        "relative_strength_5d_pct": "4.84",
+        "outperformance_thesis": "CPNG can outperform SPY/SPX over the swing window because it has a TradingView MCP top-gainer upper-band expansion while SPY is negative on both 1D and 5D, and the liquidity filter shows CPNG positive relative strength versus SPY on both windows (+2.44% 1D and +4.84% 5D); the thesis is benchmark-relative momentum, not broad market beta."
+      },
+      "mcp_checks": [
+        {
+          "tool": "top_gainers",
+          "status": "ok",
+          "evidence": "NYSE 1D top_gainers: +4.948%, close 18.03, RSI 57.90, volume 23,250,510; close above SMA20/EMA50 and upper Bollinger band."
+        },
+        {
+          "tool": "combined_analysis",
+          "status": "retryable_error",
+          "error": "Technical analysis failed after retry with Expecting value: line 1 column 1 (char 0); neutral/0-post sentiment and 0 news items are not counted as evidence."
+        },
+        {
+          "tool": "multi_timeframe",
+          "status": "retryable_error",
+          "error": "All timeframe subchecks returned Expecting value parser errors; HOLD action from empty/error data is logged as health context only and not counted as evidence."
+        },
+        {
+          "tool": "financial_news",
+          "status": "ok",
+          "evidence": "Financial news RSS returned 0 CPNG items; no news corroboration counted."
+        },
+        {
+          "tool": "compare_strategies",
+          "status": "ok",
+          "evidence": "6mo daily compare_strategies winner MACD +8.76% over 2 trades vs buy-and-hold -24.60%; optional context only, past performance is not predictive."
+        }
+      ],
+      "notes": "SPY/SPX relative thesis: CPNG has MCP-confirmed top-gainer/upper-band expansion and positive 1D/5D relative strength versus a red SPY benchmark. Risks: CPNG's relative strength is weaker than HIMS, news/RSS returned no corroborating catalyst, and optional combined/multi-timeframe MCP checks hit retryable parser failures and did not add score. Perplexity optional corroboration failed with HTTP 401."
     }
   ]
 }

@@ -586,3 +586,43 @@ Decision rule: HOLD unless TradingView MCP scanners confirm a liquid setup with 
 - Candidate written: HIMS — liquid top-volume name, TradingView MCP top-gainer setup, +5.30% relative 1D vs SPY and +15.37% relative 5D vs SPY.
 - Optional MCP multi-timeframe check returned API/data errors and a low-confidence HOLD, so it is logged as risk/context only under the simplified one-MCP-setup rule.
 - Market-open step must revalidate current liquidity, paper broker boundary, cash, PDT, and 1% portfolio-risk sizing before any paper order.
+
+## Pre-market Research — 2026-06-17
+
+Source summary: `python -m codex_trader.research_export` supplied the Yahoo/yfinance top-100-volume universe as a **liquidity filter only** plus SPY benchmark context. TradingView MCP remained the alpha/technical evidence layer. SPY benchmark proxy: 1D -0.60%, 5D -0.52%; final candidates require a concrete thesis for outperforming SPY/SPX over the swing window.
+
+### MCP scans used
+- Broad scans were run serially under the 1-2 broad-scan budget: `mcp_tradingview_top_gainers(exchange="NASDAQ", timeframe="1D", limit=50)` and `mcp_tradingview_top_gainers(exchange="NYSE", timeframe="1D", limit=50)`.
+- NASDAQ scan produced high-percentage names but no matches in the script `liquidity_symbols` filter.
+- NYSE scan produced liquid matches: HIMS and CPNG.
+- Finalist checks were run for HIMS and CPNG: `combined_analysis`, `multi_timeframe`, `financial_news`, and `compare_strategies` where practical.
+
+### Rejected MCP hits outside the liquidity filter
+These were rejected even when TradingView reported large moves or high volume, because they were absent from today's `liquidity_symbols` filter: NASDAQ:INHD (+3457.658%, TV volume 278.9M), NASDAQ:CRVO (+35.329%, TV volume 200.7M), NASDAQ:IVDA (+14.444%, TV volume 367.7M), NASDAQ:CCTG (+63.121%, TV volume 122.6M), NASDAQ:OTLK (+30.833%, TV volume 42.8M), NYSE:AMC (+12.162%, TV volume 49.8M), NYSE:LION (+13.296%, TV volume 16.4M). No non-liquid MCP hit was promoted.
+
+### Optional MCP/news/Perplexity context
+- HIMS `combined_analysis`: retryable technical parser error (`Expecting value: line 1 column 1`) after retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- HIMS `multi_timeframe`: all timeframe subchecks returned parser errors; logged as `retryable_error`, not evidence.
+- HIMS `financial_news`: 0 RSS items.
+- HIMS `compare_strategies`: 6mo daily winner MACD +56.45% over 2 trades vs buy-and-hold -10.01%; optional context only.
+- CPNG `combined_analysis`: retryable technical parser error (`Expecting value: line 1 column 1`) after retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- CPNG `multi_timeframe`: all timeframe subchecks returned parser errors; logged as `retryable_error`, not evidence.
+- CPNG `financial_news`: 0 RSS items.
+- CPNG `compare_strategies`: 6mo daily winner MACD +8.76% over 2 trades vs buy-and-hold -24.60%; optional context only.
+- Optional Perplexity script was attempted for HIMS/CPNG catalyst corroboration, but `scripts/perplexity.sh` returned HTTP 401. This did not block the MCP/liquidity-gated process.
+
+### Qualified final candidates written to `memory/PREMARKET-CANDIDATES.json`
+
+#### HIMS — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +4.970%; close 31.47 above SMA20 26.60 / EMA50 26.15 and slightly above BB_upper 31.30; RSI 63.56; TV volume 22.1M.
+- Liquidity filter reference: last 30.17; volume 22,980,500; 1D +12.49%; 5D +9.67%.
+- SPY/SPX outperformance thesis: HIMS has clear positive relative strength versus a red SPY tape (relative +13.09% 1D, +10.19% 5D) plus a fresh TradingView MCP top-gainer/upper-band expansion, so the thesis is stock-specific relative momentum rather than generic market beta.
+- Risk notes: Existing HIMS paper position from 2026-06-16; market-open must avoid aggregate HIMS risk above the 1% per-position rule and verify/repair the 10% trailing stop before any add. Optional combined/multi-timeframe checks were retryable errors and did not add score.
+
+#### CPNG — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +4.948%; close 18.03 above SMA20 16.22 / EMA50 17.53 and above BB_upper 17.76; RSI 57.90; TV volume 23.3M.
+- Liquidity filter reference: last 17.13; volume 23,573,800; 1D +1.84%; 5D +4.32%.
+- SPY/SPX outperformance thesis: CPNG has MCP-confirmed top-gainer/upper-band expansion while SPY is negative on 1D and 5D, with positive relative strength versus SPY (+2.44% 1D, +4.84% 5D), so the thesis is benchmark-relative momentum rather than broad market beta.
+- Risk notes: Relative strength is weaker than HIMS; no RSS/Perplexity news corroboration; optional combined/multi-timeframe checks were retryable errors and did not add score.
+
+Default decision: market-open has 2 MCP-screened liquid candidates to consider. Pre-market submitted no broker orders; market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% stop / 1% portfolio-risk gates before any paper order.
