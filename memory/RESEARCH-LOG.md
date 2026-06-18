@@ -626,3 +626,41 @@ These were rejected even when TradingView reported large moves or high volume, b
 - Risk notes: Relative strength is weaker than HIMS; no RSS/Perplexity news corroboration; optional combined/multi-timeframe checks were retryable errors and did not add score.
 
 Default decision: market-open has 2 MCP-screened liquid candidates to consider. Pre-market submitted no broker orders; market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% stop / 1% portfolio-risk gates before any paper order.
+
+## Pre-market Research — 2026-06-18
+
+Source summary: `python -m codex_trader.research_export` supplied the Yahoo/yfinance top-100-volume universe as a **liquidity filter only** plus SPY benchmark context. TradingView MCP remained the alpha/technical evidence layer. SPY benchmark proxy from the pre-run: 1D -1.25%, 5D -2.13%; final candidates require a concrete TradingView MCP setup and an explicit thesis for outperforming SPY/SPX over the swing window. Pre-market submitted no broker orders.
+
+### MCP scans used
+- Kept TradingView MCP calls serial and small under the provided broad-scan budget: `mcp_tradingview_top_gainers(exchange="NASDAQ", timeframe="1D", limit=50)` and `mcp_tradingview_top_gainers(exchange="NYSE", timeframe="1D", limit=50)`.
+- NASDAQ top-gainers produced high-percentage moves but no normalized hits in today's `liquidity_symbols` filter.
+- NYSE top-gainers produced liquid intersections: AMC, SMR, RDW, CPNG, and TE.
+- Deeper finalist checks were run for AMC and CPNG: `combined_analysis` with retry/backoff, `multi_timeframe`, `compare_strategies`, plus optional `scripts/perplexity.sh` corroboration.
+
+### Rejected MCP hits outside the liquidity filter
+These were rejected even when TradingView reported large moves or high TV volume because they were absent from today's `liquidity_symbols` filter: NASDAQ:INHD (+3457.658%, TV volume 278.9M), NASDAQ:SNBR (+123.368%, TV volume 911.5M), NASDAQ:ICCM (+51.300%, TV volume 152.9M), NASDAQ:ELTX (+49.287%, TV volume 51.1M), NASDAQ:BIRD (+42.708%, TV volume 47.8M), NASDAQ:RXT (+24.772%, TV volume 65.7M). No non-liquid MCP hit was promoted.
+
+### Liquid MCP hits reviewed but not written as new buy candidates
+- CPNG — qualified technical setup but already held in the paper account: 261 shares, avg entry 19.093563, current 18.80, open 10% trailing sell stop for 261 shares (HWM 19.605, stop 17.6445). Because the existing CPNG position already represents roughly a full 1% portfolio-risk slot at a 10% stop, I did not write a second CPNG buy candidate; market-open should manage/verify the existing stop rather than add duplicate exposure.
+- SMR — liquid top-gainer (+4.975% MCP, +4.55% liquidity-filter 1D) but close 10.34 remains below SMA20 11.21 and EMA50 11.61; 5D relative strength versus SPY is -11.70%. Skipped for lack of a strong SPY/SPX swing outperformance thesis.
+- RDW — liquid top-gainer (+4.323% MCP, +6.37% liquidity-filter 1D) but close 14.36 remains below SMA20 18.40 / EMA50 14.54 and 5D relative strength versus SPY is -30.86%. Skipped as a rebound-only setup without benchmark-relative follow-through.
+- TE — liquid top-gainer (+3.789% MCP, +4.75% liquidity-filter 1D) but close 9.04 remains below SMA20 9.61 and 5D relative strength versus SPY is -20.34%. Skipped for weak multi-day benchmark-relative context.
+
+### Optional MCP/news/Perplexity context
+- AMC `combined_analysis`: technical parser error (`Expecting value: line 1 column 1`) on the first attempt and again after 10-second backoff/retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- AMC `multi_timeframe`: all timeframe subchecks returned parser errors and the wrapper emitted HOLD/NO TRADE because alignment data was unavailable; logged as `retryable_error`, not evidence.
+- AMC `compare_strategies`: 6mo daily winner MACD +28.43% over 3 trades; buy-and-hold +49.44%; optional context only.
+- CPNG `combined_analysis`: technical parser error (`Expecting value: line 1 column 1`) on the first attempt and again after 10-second backoff/retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- CPNG `multi_timeframe`: all timeframe subchecks returned parser errors and the wrapper emitted HOLD/NO TRADE because alignment data was unavailable; logged as `retryable_error`, not evidence.
+- CPNG `compare_strategies`: 6mo daily winner MACD +8.76% over 2 trades vs buy-and-hold -17.01%; optional context only.
+- Optional Perplexity script was attempted for AMC/CPNG catalyst corroboration, but `scripts/perplexity.sh` returned HTTP 401. This did not block the MCP/liquidity-gated process.
+
+### Qualified final candidates written to `memory/PREMARKET-CANDIDATES.json`
+
+#### AMC — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +7.042%; close 2.66 above SMA20 1.94 / EMA50 1.74 and above BB_upper 2.61; RSI 75.14; TV volume 68.9M.
+- Liquidity filter reference: last 2.66; volume 68,571,100; 1D +6.83%; 5D +35.71%.
+- SPY/SPX outperformance thesis: AMC has very strong positive relative strength versus a red SPY tape (relative +8.08% 1D, +37.84% 5D) plus a fresh TradingView MCP top-gainer/upper-band breakout, so the thesis is stock-specific momentum/short-squeeze continuation rather than generic market beta.
+- Risk notes: AMC is overbought/extended with RSI ~75 and meme-stock reversal risk; optional combined/multi-timeframe MCP checks were retryable parser failures and did not add score; news/sentiment/Perplexity did not corroborate a fundamental catalyst. Market-open must revalidate current liquidity/quote/cash and use 10% trailing stop / 1% portfolio-risk sizing.
+
+Default decision: market-open has 1 new MCP-screened liquid candidate (AMC) to consider. CPNG remains an existing managed paper position with an open trailing stop, but it was not written as a duplicate buy candidate. Market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% stop / 1% portfolio-risk gates before any paper order.
