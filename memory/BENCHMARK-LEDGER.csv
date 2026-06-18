@@ -1,3 +1,4 @@
 date,bot_equity,cash,benchmark_symbol,benchmark_close,bot_daily_return_pct,benchmark_daily_return_pct,bot_cumulative_return_pct,benchmark_cumulative_return_pct,alpha_pct,drawdown_pct,exposure_pct
 2026-06-16,49949.21,45018.39,SPY,750.33,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,9.8717
 2026-06-17,49963.09,40034.96,SPY,740.96,0.0278,-1.2488,0.0278,-1.2488,1.2766,0.0000,19.8709
+2026-06-18,50285.49,40034.95,SPY,746.74,0.6453,0.7801,0.6732,-0.4785,1.1517,0.0000,20.3847

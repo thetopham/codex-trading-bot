@@ -247,3 +247,26 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Liquidity skips: AMC:not_in_top_volume_liquidity_filter
 
 No market-open candidates passed the TradingView MCP + top-volume liquidity intersection. No broker submissions attempted.
+
+
+## EOD Snapshot — 2026-06-18
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "188841.31", "cash": "40034.95", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "188841.31", "equity": "50285.49", "long_market_value": "10250.54", "pattern_day_trader": false, "portfolio_value": "50285.49", "position_market_value": "10250.54", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[{"avg_entry_price": "19.093563", "current_price": "18.04", "market_value": "4708.44", "qty": "261", "symbol": "CPNG", "unrealized_pl": "-274.979943", "unrealized_plpc": "-0.05518"}, {"avg_entry_price": "31.73", "current_price": "35.3", "market_value": "5542.1", "qty": "157", "symbol": "HIMS", "unrealized_pl": "560.49", "unrealized_plpc": "0.11251"}]
+```
+
+### Benchmark
+- Benchmark: SPY close $746.74
+- Bot daily return: +0.65%
+- SPY daily return: +0.78%
+- Bot cumulative return: +0.67%
+- SPY cumulative return: -0.48%
+- Alpha vs SPY: +1.15%
+- Drawdown: 0.00%
+- Judgment: AHEAD: Codex is beating SPY by +1.15% cumulative alpha.
