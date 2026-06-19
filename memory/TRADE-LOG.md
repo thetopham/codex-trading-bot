@@ -337,3 +337,26 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 ; attempt 2: curl: (22) The requested URL returned error: 403
 ; attempt 3: curl: (22) The requested URL returned error: 403
 .
+
+
+## EOD Snapshot — 2026-06-19
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "157695.9", "cash": "40034.95", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "157695.9", "equity": "50301.74", "long_market_value": "10266.79", "pattern_day_trader": false, "portfolio_value": "50301.74", "position_market_value": "10266.79", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[{"avg_entry_price": "19.093563", "current_price": "18", "market_value": "4698", "qty": "261", "symbol": "CPNG", "unrealized_pl": "-285.419943", "unrealized_plpc": "-0.05727"}, {"avg_entry_price": "31.73", "current_price": "35.47", "market_value": "5568.79", "qty": "157", "symbol": "HIMS", "unrealized_pl": "587.18", "unrealized_plpc": "0.11787"}]
+```
+
+### Benchmark
+- Benchmark: SPY close $746.74
+- Bot daily return: +0.03%
+- SPY daily return: -0.00%
+- Bot cumulative return: +0.71%
+- SPY cumulative return: -0.48%
+- Alpha vs SPY: +1.18%
+- Drawdown: 0.00%
+- Judgment: AHEAD: Codex is beating SPY by +1.18% cumulative alpha.
