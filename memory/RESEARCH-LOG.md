@@ -664,3 +664,53 @@ These were rejected even when TradingView reported large moves or high TV volume
 - Risk notes: AMC is overbought/extended with RSI ~75 and meme-stock reversal risk; optional combined/multi-timeframe MCP checks were retryable parser failures and did not add score; news/sentiment/Perplexity did not corroborate a fundamental catalyst. Market-open must revalidate current liquidity/quote/cash and use 10% trailing stop / 1% portfolio-risk sizing.
 
 Default decision: market-open has 1 new MCP-screened liquid candidate (AMC) to consider. CPNG remains an existing managed paper position with an open trailing stop, but it was not written as a duplicate buy candidate. Market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% stop / 1% portfolio-risk gates before any paper order.
+
+## Pre-market Research — 2026-06-19
+
+Source summary: `python -m codex_trader.research_export` supplied the Yahoo/yfinance top-100-volume universe as a **liquidity filter only** plus SPY benchmark context. TradingView MCP remained the alpha/technical evidence layer. SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%; final candidates require a concrete TradingView MCP setup and a specific thesis for outperforming SPY/SPX over the swing window. Safety boundary: Alpaca paper only; pre-market submitted no broker orders.
+
+### MCP scans used
+- Kept TradingView MCP calls serial and small under the provided 1-2 broad-scan budget: `mcp_tradingview_top_gainers(exchange="NASDAQ", timeframe="1D", limit=50)` and `mcp_tradingview_top_gainers(exchange="NYSE", timeframe="1D", limit=50)`.
+- Did not fan out `volume_breakout`, `smart_volume`, `rating_filter`, or `bollinger_scan` after top_gainers produced liquid NYSE intersections; this follows the retry/flakiness budget and avoids treating Yahoo momentum as alpha evidence.
+- NASDAQ top-gainers produced high-percentage moves but no normalized symbols in today's `liquidity_symbols` filter.
+- NYSE top-gainers produced liquid intersections reviewed today: BFLY, SMR, HIMS, RKT, and AMC.
+- Deeper finalist checks were run for BFLY, RKT, and AMC: `combined_analysis` with one 10-second retry after parser failure, plus `compare_strategies` where practical. Optional Perplexity was attempted once through `scripts/perplexity.sh`.
+
+### Rejected MCP hits outside the liquidity filter
+These were rejected even when TradingView reported large moves or high TV volume because they were absent from today's `liquidity_symbols` filter: NASDAQ:INHD (+3457.658%, TV volume 278.9M), NASDAQ:KALA (+26.667%), NASDAQ:APLM (+26.066%), NASDAQ:MDCX (+25.825%), NASDAQ:ATPC (+18.654%, TV volume 72.4M), NASDAQ:CXAI (+16.484%, TV volume 37.5M), NYSE:STG (+28.437%), NYSE:HVT.A (+20.403%), NYSE:GCTS (+20.000%), NYSE:TGE (+19.231%), NYSE:MEI (+17.617%), NYSE:WOLF (+12.217%), NYSE:KMX (+11.097%), and NYSE:BE (+10.521%). No non-liquid MCP hit was promoted.
+
+### Liquid MCP hits reviewed but not written as new buy candidates
+- HIMS — qualified technical setup but already held in the paper account: 157 shares, avg entry 31.73, current 35.47, open 10% trailing sell stop for 157 shares (HWM 35.60, stop 32.04). HIMS is up about +11.8% from entry, below the +15% threshold for tightening to a 7% trail. Because the existing HIMS position already occupies a risk slot with an open protective stop, I did not write a duplicate HIMS buy candidate.
+- CPNG — existing paper position remains managed from earlier sessions: 261 shares, avg entry 19.093563, current 18.00, open 10% trailing sell stop for 261 shares (HWM 19.605, stop 17.6445). CPNG was not a liquid top-gainer finalist today and was not written as a duplicate buy candidate.
+- SMR — liquid top-gainer (+11.122% MCP), but the liquidity filter shows weak 5D benchmark-relative context (SMR 5D -1.52% vs SPY +1.25%, relative -2.77%) and a material mismatch between MCP close 11.74 and the pre-run liquidity last price 10.34. Skipped for insufficient SPY/SPX swing outperformance thesis versus the cleaner liquid setups.
+
+### Optional MCP/news/Perplexity context
+- BFLY `combined_analysis`: technical parser error (`Expecting value: line 1 column 1`) on the first attempt and again after 10-second backoff/retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- BFLY `compare_strategies`: 6mo daily winner RSI +90.59% over 2 trades vs buy-and-hold +60.39%; optional context only.
+- RKT `combined_analysis`: technical parser error (`Expecting value: line 1 column 1`) on the first attempt and again after 10-second backoff/retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- RKT `compare_strategies`: 6mo daily context was weak: buy-and-hold -24.42%, with the nominal top-ranked strategy at 0 trades / 0.00%; logged as a risk note, not a veto.
+- AMC `combined_analysis`: technical parser error (`Expecting value: line 1 column 1`) on the first attempt and again after 10-second backoff/retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- AMC `compare_strategies`: 6mo daily winner MACD +34.13% over 3 trades while buy-and-hold was +61.71%; optional context only.
+- Optional Perplexity script was attempted for BFLY/RKT/AMC catalyst corroboration, but `scripts/perplexity.sh` returned HTTP 401. This did not block the MCP/liquidity-gated process.
+
+### Qualified final candidates written to `memory/PREMARKET-CANDIDATES.json`
+
+#### BFLY — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +23.440%; close 8.90 above SMA20 5.153 / EMA50 4.886 and above BB_upper 7.112; RSI 84.59; TV volume 60.5M.
+- Liquidity filter reference: last 8.90; volume 60,103,400; 1D +55.87%; 5D +94.75%.
+- SPY/SPX outperformance thesis: BFLY has exceptional positive relative strength versus SPY (+55.09% 1D, +93.50% 5D) plus a fresh MCP upper-band volume breakout, so the thesis is stock-specific momentum/volume expansion rather than broad market beta.
+- Risk notes: very extended RSI and 5D move; no RSS/Reddit/Perplexity corroboration; optional combined-analysis technical block was retryable parser failure and did not add score.
+
+#### AMC — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +6.792%; close 2.83 above SMA20 2.001 / EMA50 1.784 and above BB_upper 2.750; RSI 77.72; TV volume 81.4M.
+- Liquidity filter reference: last 2.83; volume 81,190,100; 1D +6.39%; 5D +58.10%.
+- SPY/SPX outperformance thesis: AMC has positive relative strength versus SPY (+5.61% 1D, +56.85% 5D) plus a liquid MCP upper-band breakout; the thesis is stock-specific momentum/short-squeeze continuation rather than generic market beta.
+- Risk notes: meme-stock reversal risk and overbought RSI; no RSS/Reddit/Perplexity corroboration; optional combined-analysis technical block was retryable parser failure and did not add score.
+
+#### RKT — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +7.013%; close 14.42 above SMA20 13.597 / EMA50 14.238; RSI 54.76; TV volume 52.8M.
+- Liquidity filter reference: last 14.42; volume 52,795,900; 1D +9.08%; 5D +13.99%.
+- SPY/SPX outperformance thesis: RKT has positive relative strength versus SPY (+8.30% 1D, +12.75% 5D) and a current MCP top-gainer momentum setup with a moderate RSI, making it a less-extended benchmark-relative momentum candidate.
+- Risk notes: not an upper-band breakout yet (close below BB_upper 14.894), weak 6mo strategy/backtest context, no RSS/Reddit/Perplexity corroboration, and optional combined-analysis technical block was retryable parser failure.
+
+Default decision: market-open has 3 MCP-screened liquid candidates to consider (BFLY, AMC, RKT). Pre-market submitted no broker orders; market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% trailing-stop / 1% portfolio-risk gates before any paper order.

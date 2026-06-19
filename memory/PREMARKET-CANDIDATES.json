@@ -1,55 +1,42 @@
 {
-  "date": "2026-06-18",
+  "date": "2026-06-19",
   "source": "TradingView MCP screening over top-100-volume liquidity filter",
   "candidates": [
     {
-      "symbol": "AMC",
+      "symbol": "BFLY",
       "exchange": "NYSE",
       "decision": "candidate",
-      "mcp_score": "74",
+      "mcp_score": "84",
       "sources": [
         "top_gainers",
         "compare_strategies"
       ],
-      "catalyst": "TradingView MCP NYSE top_gainers 1D scan found AMC +7.042% with close 2.66 above SMA20 1.94, EMA50 1.74, and BB_upper 2.61; RSI 75.14 and TradingView volume 68.9M confirm a liquid upper-band momentum breakout.",
-      "notes": "SPY/SPX relative thesis: AMC is a high-beta/meme-risk name but it has a current MCP top-gainer upper-band breakout while SPY is negative on both 1D and 5D; the liquidity filter shows AMC +6.83% 1D and +35.71% 5D versus SPY -1.25% and -2.13%, giving +8.08% 1D and +37.84% 5D relative strength. Risk: RSI ~75 is overbought/extended, reversal risk is high, combined_analysis technical parsing failed after retry, multi_timeframe returned parser errors, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must size from live equity with the 10% trailing stop / 1% portfolio-risk formula and submit no live orders.",
-      "mcp_checks": [
-        {
-          "tool": "top_gainers",
-          "status": "ok",
-          "evidence": "NYSE 1D top_gainers: AMC +7.042%; close 2.66 above SMA20 1.9355, EMA50 1.7413, and BB_upper 2.6088; RSI 75.14; TradingView volume 68,878,961. Counted as the required TradingView MCP technical setup."
-        },
-        {
-          "tool": "combined_analysis",
-          "status": "retryable_error",
-          "error": "Technical block failed after retry with 'Analysis failed: Expecting value: line 1 column 1 (char 0)'; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence."
-        },
-        {
-          "tool": "multi_timeframe",
-          "status": "retryable_error",
-          "error": "All timeframe subchecks returned 'Expecting value: line 1 column 1 (char 0)' and the wrapper emitted HOLD/NO TRADE due unavailable alignment. Treated as MCP health/context only, not bearish evidence."
-        },
-        {
-          "tool": "compare_strategies",
-          "status": "ok",
-          "evidence": "6mo daily comparison: MACD ranked best at +28.43% over 3 trades; buy-and-hold +49.44%. Optional backtest context only; not a hard gate."
-        },
-        {
-          "tool": "perplexity_optional",
-          "status": "retryable_error",
-          "error": "scripts/perplexity.sh returned HTTP 401; not counted as evidence."
-        }
+      "catalyst": "TradingView MCP NYSE top_gainers 1D scan found BFLY +23.440% with close 8.90 above SMA20 5.153, EMA50 4.886, and BB_upper 7.112; RSI 84.59 and TradingView volume 60.5M confirm an upper-band volume breakout.",
+      "notes": "SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows BFLY 1D +55.87% and 5D +94.75%, relative to SPY +55.09% 1D and +93.50% 5D. Outperformance thesis: BFLY can beat SPY/SPX over the swing window because it has a fresh MCP-confirmed upper-band breakout with exceptional single-name volume/relative momentum rather than generic market beta. Optional 6mo daily compare_strategies context favored RSI at +90.59% over 2 trades vs buy-and-hold +60.39%. Risks: RSI >84 and the 5D move is extremely extended, so reversal/slippage risk is high; combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula."
+    },
+    {
+      "symbol": "AMC",
+      "exchange": "NYSE",
+      "decision": "candidate",
+      "mcp_score": "77",
+      "sources": [
+        "top_gainers",
+        "compare_strategies"
       ],
-      "benchmark": {
-        "symbol": "SPY",
-        "benchmark_1d_pct": "-1.25",
-        "benchmark_5d_pct": "-2.13",
-        "candidate_1d_pct": "6.83",
-        "candidate_5d_pct": "35.71",
-        "relative_strength_1d_pct": "8.08",
-        "relative_strength_5d_pct": "37.84",
-        "outperformance_thesis": "AMC can outperform SPY/SPX over the swing window because it has a TradingView MCP top-gainer upper-band breakout and very strong positive relative strength while the benchmark proxy is down on both 1D and 5D; the thesis is stock-specific momentum/short-squeeze continuation rather than generic market beta."
-      }
+      "catalyst": "TradingView MCP NYSE top_gainers 1D scan found AMC +6.792% with close 2.83 above SMA20 2.001, EMA50 1.784, and BB_upper 2.750; RSI 77.72 and TradingView volume 81.4M confirm a liquid upper-band momentum breakout.",
+      "notes": "SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows AMC 1D +6.39% and 5D +58.10%, relative to SPY +5.61% 1D and +56.85% 5D. Outperformance thesis: AMC can beat SPY/SPX over the swing window if the MCP-confirmed high-volume upper-band breakout and meme/short-squeeze momentum continue; this is stock-specific relative strength, not generic market beta. Optional 6mo daily compare_strategies context ranked MACD best at +34.13% over 3 trades while buy-and-hold was +61.71%. Risks: RSI ~78 is overbought, meme-stock reversal risk is high, combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula."
+    },
+    {
+      "symbol": "RKT",
+      "exchange": "NYSE",
+      "decision": "candidate",
+      "mcp_score": "72",
+      "sources": [
+        "top_gainers",
+        "compare_strategies"
+      ],
+      "catalyst": "TradingView MCP NYSE top_gainers 1D scan found RKT +7.013% with close 14.42 above SMA20 13.597 and EMA50 14.238; RSI 54.76 and TradingView volume 52.8M show a liquid momentum turn that is less overbought than BFLY/AMC.",
+      "notes": "SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows RKT 1D +9.08% and 5D +13.99%, relative to SPY +8.30% 1D and +12.75% 5D. Outperformance thesis: RKT can beat SPY/SPX over the swing window because it has a current MCP top-gainer setup, positive 1D and 5D benchmark-relative strength, and a moderate RSI compared with the more extended squeeze names. Risks: close is still below BB_upper 14.894, optional 6mo daily compare_strategies context was weak (buy-and-hold -24.42% and no positive strategy leader), combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula."
     }
   ]
 }
