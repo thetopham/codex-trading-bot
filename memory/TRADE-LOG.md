@@ -270,3 +270,70 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Alpha vs SPY: +1.15%
 - Drawdown: 0.00%
 - Judgment: AHEAD: Codex is beating SPY by +1.15% cumulative alpha.
+
+## Market-open TradingView MCP Candidates — 2026-06-19
+
+- Candidate source: memory/PREMARKET-CANDIDATES.json
+- Candidate file status: ok
+- Liquidity filter: current top 100 stocks by reported volume
+- Liquidity skips: none
+
+### BFLY — APPROVED_DRY_RUN
+- Qty: 565
+- Reference price: 8.90
+- Estimated cost: 5028.50
+- Risk at 10% stop: 502.8500
+- Stop: 10% trailing stop; paper order uses trail_percent=10
+- Target: 10.68
+- MCP score: 84
+- MCP evidence summary: scanner_hit,volume_confirmation,optional_context,retryable_mcp_error
+- MCP sources: top_gainers, compare_strategies
+- MCP notes: SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows BFLY 1D +55.87% and 5D +94.75%, relative to SPY +55.09% 1D and +93.50% 5D. Outperformance thesis: BFLY can beat SPY/SPX over the swing window because it has a fresh MCP-confirmed upper-band breakout with exceptional single-name volume/relative momentum rather than generic market beta. Optional 6mo daily compare_strategies context favored RSI at +90.59% over 2 trades vs buy-and-hold +60.39%. Risks: RSI >84 and the 5D move is extremely extended, so reversal/slippage risk is high; combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula.
+- Catalyst: TradingView MCP NYSE top_gainers 1D scan found BFLY +23.440% with close 8.90 above SMA20 5.153, EMA50 4.886, and BB_upper 7.112; RSI 84.59 and TradingView volume 60.5M confirm an upper-band volume breakout.
+- Benchmark thesis: SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows BFLY 1D +55.87% and 5D +94.75%, relative to SPY +55.09% 1D and +93.50% 5D. Outperformance thesis: BFLY can beat SPY/SPX over the swing window because it has a fresh MCP-confirmed upper-band breakout with exceptional single-name volume/relative momentum rather than generic market beta. Optional 6mo daily compare_strategies context favored RSI at +90.59% over 2 trades vs buy-and-hold +60.39%. Risks: RSI >84 and the 5D move is extremely extended, so reversal/slippage risk is high; combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula.
+- Relative strength vs SPY: 1D 0%, 5D 0%
+- Gate reasons: none
+- Broker action: paper_submit buy_ok=True trailing_stop_ok=False qty=565 stop_response=attempt 1: curl: (22) The requested URL returned error: 403
+; attempt 2: curl: (22) The requested URL returned error: 403
+; attempt 3: curl: (22) The requested URL returned error: 403
+.
+
+### AMC — APPROVED_DRY_RUN
+- Qty: 1891
+- Reference price: 2.66
+- Estimated cost: 5030.06
+- Risk at 10% stop: 503.0060
+- Stop: 10% trailing stop; paper order uses trail_percent=10
+- Target: 3.19
+- MCP score: 77
+- MCP evidence summary: scanner_hit,optional_context,retryable_mcp_error
+- MCP sources: top_gainers, compare_strategies
+- MCP notes: SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows AMC 1D +6.39% and 5D +58.10%, relative to SPY +5.61% 1D and +56.85% 5D. Outperformance thesis: AMC can beat SPY/SPX over the swing window if the MCP-confirmed high-volume upper-band breakout and meme/short-squeeze momentum continue; this is stock-specific relative strength, not generic market beta. Optional 6mo daily compare_strategies context ranked MACD best at +34.13% over 3 trades while buy-and-hold was +61.71%. Risks: RSI ~78 is overbought, meme-stock reversal risk is high, combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula.
+- Catalyst: TradingView MCP NYSE top_gainers 1D scan found AMC +6.792% with close 2.83 above SMA20 2.001, EMA50 1.784, and BB_upper 2.750; RSI 77.72 and TradingView volume 81.4M confirm a liquid upper-band momentum breakout.
+- Benchmark thesis: SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows AMC 1D +6.39% and 5D +58.10%, relative to SPY +5.61% 1D and +56.85% 5D. Outperformance thesis: AMC can beat SPY/SPX over the swing window if the MCP-confirmed high-volume upper-band breakout and meme/short-squeeze momentum continue; this is stock-specific relative strength, not generic market beta. Optional 6mo daily compare_strategies context ranked MACD best at +34.13% over 3 trades while buy-and-hold was +61.71%. Risks: RSI ~78 is overbought, meme-stock reversal risk is high, combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula.
+- Relative strength vs SPY: 1D 0%, 5D 0%
+- Gate reasons: none
+- Broker action: paper_submit buy_ok=True trailing_stop_ok=False qty=1891 stop_response=attempt 1: curl: (22) The requested URL returned error: 403
+; attempt 2: curl: (22) The requested URL returned error: 403
+; attempt 3: curl: (22) The requested URL returned error: 403
+.
+
+### RKT — APPROVED_DRY_RUN
+- Qty: 348
+- Reference price: 14.42
+- Estimated cost: 5018.16
+- Risk at 10% stop: 501.8160
+- Stop: 10% trailing stop; paper order uses trail_percent=10
+- Target: 17.30
+- MCP score: 72
+- MCP evidence summary: scanner_hit,optional_context,retryable_mcp_error
+- MCP sources: top_gainers, compare_strategies
+- MCP notes: SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows RKT 1D +9.08% and 5D +13.99%, relative to SPY +8.30% 1D and +12.75% 5D. Outperformance thesis: RKT can beat SPY/SPX over the swing window because it has a current MCP top-gainer setup, positive 1D and 5D benchmark-relative strength, and a moderate RSI compared with the more extended squeeze names. Risks: close is still below BB_upper 14.894, optional 6mo daily compare_strategies context was weak (buy-and-hold -24.42% and no positive strategy leader), combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula.
+- Catalyst: TradingView MCP NYSE top_gainers 1D scan found RKT +7.013% with close 14.42 above SMA20 13.597 and EMA50 14.238; RSI 54.76 and TradingView volume 52.8M show a liquid momentum turn that is less overbought than BFLY/AMC.
+- Benchmark thesis: SPY benchmark proxy from the pre-run: 1D +0.78%, 5D +1.25%. Liquidity filter shows RKT 1D +9.08% and 5D +13.99%, relative to SPY +8.30% 1D and +12.75% 5D. Outperformance thesis: RKT can beat SPY/SPX over the swing window because it has a current MCP top-gainer setup, positive 1D and 5D benchmark-relative strength, and a moderate RSI compared with the more extended squeeze names. Risks: close is still below BB_upper 14.894, optional 6mo daily compare_strategies context was weak (buy-and-hold -24.42% and no positive strategy leader), combined_analysis technical block failed with retryable parser errors after retry, sentiment/news had 0 posts/items, and optional Perplexity returned HTTP 401. Market-open must revalidate liquidity/quote/cash and apply the 10% trailing stop / 1% portfolio-risk sizing formula.
+- Relative strength vs SPY: 1D 0%, 5D 0%
+- Gate reasons: none
+- Broker action: paper_submit buy_ok=True trailing_stop_ok=False qty=348 stop_response=attempt 1: curl: (22) The requested URL returned error: 403
+; attempt 2: curl: (22) The requested URL returned error: 403
+; attempt 3: curl: (22) The requested URL returned error: 403
+.
