@@ -360,3 +360,12 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Alpha vs SPY: +1.18%
 - Drawdown: 0.00%
 - Judgment: AHEAD: Codex is beating SPY by +1.18% cumulative alpha.
+
+## Market-open TradingView MCP Candidates — 2026-06-22
+
+- Candidate source: memory/PREMARKET-CANDIDATES.json
+- Candidate file status: candidate file date 2026-06-19 != today 2026-06-22
+- Liquidity filter: current top 72 stocks by reported volume
+- Liquidity skips: none
+
+No market-open candidates passed the TradingView MCP + top-volume liquidity intersection. No broker submissions attempted.
