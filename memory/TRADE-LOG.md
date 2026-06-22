@@ -377,3 +377,26 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Added 10% GTC trailing stop for AMC: order `9daf1a3c-95a4-47c7-ab08-7ae075ecfbe4`, qty 1891, stop_price 2.5605, status `new`.
 - Added 10% GTC trailing stop for RKT: order `620da3d3-755e-4b3b-9fab-f67164c22a69`, qty 348, stop_price 12.1095, status `new`.
 - Verified remaining open positions have protective sell trailing stops: AMC, HIMS, RKT. Verified unprotected open positions: none.
+
+
+## EOD Snapshot — 2026-06-22
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "162235.78", "cash": "33635.51", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "162235.78", "equity": "48650.74", "long_market_value": "15015.23", "pattern_day_trader": false, "portfolio_value": "48650.74", "position_market_value": "15015.23", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[{"avg_entry_price": "2.82", "current_price": "2.71", "market_value": "5124.61", "qty": "1891", "symbol": "AMC", "unrealized_pl": "-208.01", "unrealized_plpc": "-0.03901"}, {"avg_entry_price": "31.73", "current_price": "33.34", "market_value": "5234.38", "qty": "157", "symbol": "HIMS", "unrealized_pl": "252.77", "unrealized_plpc": "0.05074"}, {"avg_entry_price": "14.12", "current_price": "13.38", "market_value": "4656.24", "qty": "348", "symbol": "RKT", "unrealized_pl": "-257.52", "unrealized_plpc": "-0.05241"}]
+```
+
+### Benchmark
+- Benchmark: SPY close $744.39
+- Bot daily return: -3.28%
+- SPY daily return: -0.31%
+- Bot cumulative return: -2.60%
+- SPY cumulative return: -0.79%
+- Alpha vs SPY: -1.81%
+- Drawdown: -3.28%
+- Judgment: BEHIND: Codex trails SPY by +1.81% cumulative alpha.
