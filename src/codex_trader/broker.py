@@ -17,6 +17,9 @@ class PaperOrderResult:
     stop_ok: bool
     buy_response: str
     stop_response: str
+    close_attempted: bool = False
+    close_ok: bool = False
+    close_response: str = ""
 
 
 def _order_id(raw: str) -> str | None:
@@ -87,6 +90,14 @@ def submit_market_buy_with_trailing_stop(
             time.sleep(stop_retry_delay)
     assert stop is not None
     stop_response = stop.stdout if stop.ok else "; ".join(stop_errors)
+    close_attempted = False
+    close_ok = False
+    close_response = ""
+    if not stop.ok:
+        close_attempted = True
+        close = run_script(root, "alpaca.sh", "close", symbol.upper())
+        close_ok = close.ok
+        close_response = close.stdout if close.ok else (close.stderr or close.stdout)
     return PaperOrderResult(
         symbol=symbol.upper(),
         qty=stop_qty,
@@ -94,6 +105,9 @@ def submit_market_buy_with_trailing_stop(
         stop_ok=stop.ok,
         buy_response=buy.stdout if buy.ok else (buy.stderr or buy.stdout),
         stop_response=stop_response,
+        close_attempted=close_attempted,
+        close_ok=close_ok,
+        close_response=close_response,
     )
 
 

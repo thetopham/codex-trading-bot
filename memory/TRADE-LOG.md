@@ -369,3 +369,11 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Liquidity skips: none
 
 No market-open candidates passed the TradingView MCP + top-volume liquidity intersection. No broker submissions attempted.
+
+## Protective Stop Enforcement — 2026-06-22T18:47Z
+
+- Operator rule: no open positions without a stop-loss/trailing-stop.
+- BFLY was unprotected and beyond the -7% cut rule; submitted paper close order `a0f92129-ec83-4727-a1b8-fd3bfb83e0ac` for 565 shares.
+- Added 10% GTC trailing stop for AMC: order `9daf1a3c-95a4-47c7-ab08-7ae075ecfbe4`, qty 1891, stop_price 2.5605, status `new`.
+- Added 10% GTC trailing stop for RKT: order `620da3d3-755e-4b3b-9fab-f67164c22a69`, qty 348, stop_price 12.1095, status `new`.
+- Verified remaining open positions have protective sell trailing stops: AMC, HIMS, RKT. Verified unprotected open positions: none.

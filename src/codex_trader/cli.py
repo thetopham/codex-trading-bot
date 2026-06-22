@@ -85,13 +85,27 @@ def cmd_check_trade(args: argparse.Namespace) -> int:
 def cmd_midday_scan(args: argparse.Namespace) -> int:
     root = _root()
     positions_result = run_script(root, "alpaca.sh", "positions")
+    orders_result = run_script(root, "alpaca.sh", "orders", "open")
     if not positions_result.ok:
         print(positions_result.stderr or positions_result.stdout)
         return positions_result.returncode
+    if not orders_result.ok:
+        print(orders_result.stderr or orders_result.stdout)
+        return orders_result.returncode
     raw_positions = json.loads(positions_result.stdout or "[]")
+    raw_orders = json.loads(orders_result.stdout or "[]")
+    protected_symbols = {
+        str(o.get("symbol", "")).upper()
+        for o in raw_orders
+        if str(o.get("side", "")).lower() == "sell"
+        and str(o.get("type", "")).lower() in {"trailing_stop", "stop", "stop_limit"}
+        and str(o.get("status", "")).lower() in {"new", "accepted", "pending_new", "partially_filled"}
+    }
     actions: list[str] = []
     for raw in raw_positions:
         p = Position.from_api(raw)
+        if p.symbol.upper() not in protected_symbols:
+            actions.append(f"UNPROTECTED {p.symbol}: no open stop-loss/trailing-stop order")
         if should_cut_loss(p):
             actions.append(f"CUT {p.symbol}: unrealized P/L {p.unrealized_plpc:.2%} <= -7%")
         trail = trailing_stop_percent_for_position(p)
@@ -173,6 +187,8 @@ def cmd_market_open_intents(args: argparse.Namespace) -> int:
             broker_action = f"paper_submit buy_ok={result.buy_ok} trailing_stop_ok={result.stop_ok} qty={result.qty}"
             if not result.stop_ok:
                 broker_action += f" stop_response={result.stop_response[:300]}"
+            if result.close_attempted:
+                broker_action += f" fail_safe_close_attempted=True close_ok={result.close_ok} close_response={result.close_response[:300]}"
         lines += [
             f"### {c.symbol} — {status}",
             f"- Qty: {qty}",
