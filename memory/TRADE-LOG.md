@@ -400,3 +400,27 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Alpha vs SPY: -1.81%
 - Drawdown: -3.28%
 - Judgment: BEHIND: Codex trails SPY by +1.81% cumulative alpha.
+
+## Market-open TradingView MCP Candidates — 2026-06-23
+
+- Candidate source: memory/PREMARKET-CANDIDATES.json
+- Candidate file status: ok
+- Liquidity filter: current top 75 stocks by reported volume
+- Liquidity skips: NVO:not_in_top_volume_liquidity_filter
+
+### TE — APPROVED_DRY_RUN
+- Qty: 479
+- Reference price: 9.93
+- Estimated cost: 4756.47
+- Risk at 10% stop: 475.6470
+- Stop: 10% trailing stop; paper order uses trail_percent=10
+- Target: 11.92
+- MCP score: 78
+- MCP evidence summary: scanner_hit,optional_context,retryable_mcp_error
+- MCP sources: top_gainers, compare_strategies
+- MCP notes: SPY benchmark proxy from the pre-run: 1D -0.31%, 5D +0.70%. Liquidity filter shows TE relative strength of +11.54% 1D and +13.21% 5D versus SPY. Optional compare_strategies context was supportive (MACD +58.14% over 6mo daily), but combined_analysis and multi_timeframe technical checks hit retryable parser failures and did not add evidence. Risks: not an upper-Bollinger breakout yet (close below BB_upper 12.232), single-name momentum can reverse, and market-open must revalidate quote/liquidity/cash plus the 10% trailing-stop / 1% portfolio-risk sizing formula before any paper order.
+- Catalyst: TradingView MCP NYSE top_gainers 1D scan found TE +8.787%, close 10.40 above SMA20 9.727 and EMA50 7.982 with RSI 61.23 and TradingView volume 49.2M; the top-volume liquidity filter also shows 49,023,600 shares traded, last 10.40, and +11.23% 1D / +13.91% 5D momentum.
+- Benchmark thesis: TE can outperform SPY/SPX over the swing window because it has a fresh TradingView MCP top-gainer setup with strong 1D and 5D relative strength versus SPY, high volume, and price above key daily moving averages; this is benchmark-relative momentum rather than generic market beta.
+- Relative strength vs SPY: 1D 11.54%, 5D 13.21%
+- Gate reasons: none
+- Broker action: paper_submit buy_ok=True trailing_stop_ok=True qty=479.
