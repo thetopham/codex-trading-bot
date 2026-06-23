@@ -714,3 +714,51 @@ These were rejected even when TradingView reported large moves or high TV volume
 - Risk notes: not an upper-band breakout yet (close below BB_upper 14.894), weak 6mo strategy/backtest context, no RSS/Reddit/Perplexity corroboration, and optional combined-analysis technical block was retryable parser failure.
 
 Default decision: market-open has 3 MCP-screened liquid candidates to consider (BFLY, AMC, RKT). Pre-market submitted no broker orders; market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% trailing-stop / 1% portfolio-risk gates before any paper order.
+
+## Pre-market Research — 2026-06-23
+
+Source summary: `python -m codex_trader.research_export` supplied the Yahoo/yfinance top-100-volume universe as a **liquidity filter only** plus SPY benchmark context. TradingView MCP remained the alpha/technical evidence layer. SPY benchmark proxy from the pre-run: 1D -0.31%, 5D +0.70%; final candidates require a concrete TradingView MCP setup and a specific thesis for outperforming SPY/SPX over the swing window. Safety boundary: Alpaca paper only; pre-market submitted no broker orders.
+
+### Liquidity / benchmark context
+- The liquidity filter contained 100 symbols; high relative-momentum Yahoo references included APGE, DFTX, UMC, MU, INTC, TE, KEEL, NVO, AAL, MARA, and AMD, but Yahoo/yfinance score alone was not accepted as alpha evidence.
+- Existing Alpaca paper positions checked through `scripts/alpaca.sh`: AMC, HIMS, and RKT all have open trailing-stop sell orders. AMC is already far beyond the -7% cut threshold in the read-only pre-market snapshot, so the next broker-management routine must enforce the cut/stop rules; this research run did not submit orders.
+
+### MCP scans used
+- Kept TradingView MCP calls serial and small under the provided 1-2 broad-scan budget: `mcp_tradingview_top_gainers(exchange="NASDAQ", timeframe="1D", limit=50)` and `mcp_tradingview_top_gainers(exchange="NYSE", timeframe="1D", limit=50)`.
+- Did not fan out `volume_breakout`, `smart_volume`, `rating_filter`, or `bollinger_scan` after `top_gainers` produced liquid NYSE intersections; this follows the retry/flakiness budget and avoids treating Yahoo momentum as alpha evidence.
+- NASDAQ top-gainers produced high-percentage moves but no normalized symbols in today's `liquidity_symbols` filter.
+- NYSE top-gainers produced liquid intersections reviewed today: TE, BB, NOK, and NVO.
+- Deeper finalist checks were run for TE and NVO: `combined_analysis` with one 10-second retry after parser failure, `multi_timeframe_analysis`, and `compare_strategies` where practical. Optional Perplexity was attempted once through `scripts/perplexity.sh`.
+
+### Rejected MCP hits outside the liquidity filter
+These were rejected even when TradingView reported large moves or high TV volume because they were absent from today's `liquidity_symbols` filter: NASDAQ:INHD (+3457.658%, TV volume 278.9M), NASDAQ:EHGO (+48.175%, TV volume 117.1M), NASDAQ:FGMC (+44.704%), NASDAQ:SKYQ (+17.647%, TV volume 221.4M), NASDAQ:ENTX (+19.355%, TV volume 52.3M), NASDAQ:NIXX (+16.393%, TV volume 29.8M), NASDAQ:OTLK (+15.823%, TV volume 18.1M), NYSE:BHVN (+10.163%), NYSE:GLW (+4.664%, TV volume 18.6M), and NYSE:COHR (+7.706%). No non-liquid MCP hit was promoted.
+
+### Liquid MCP hits reviewed but not written as new buy candidates
+- BB — liquid NYSE top-gainer (+4.394% MCP; liquidity filter +4.89% 1D) but the liquidity filter shows weak 5D benchmark-relative context (BB 5D -5.38% vs SPY +0.70%, relative -6.08%) and the MCP close 8.79 remains below SMA20 9.129. Skipped for insufficient SPY/SPX swing outperformance thesis.
+- NOK — liquid NYSE top-gainer (+4.263% MCP; liquidity filter +6.97% 1D) but the liquidity filter shows weak 5D benchmark-relative context (NOK 5D -1.10% vs SPY +0.70%, relative -1.80%) and the MCP close 14.43 remains below SMA20 14.992. Skipped for insufficient multi-day benchmark-relative follow-through.
+- APGE, DFTX, UMC, MU, INTC, and other strong Yahoo relative-momentum names were not promoted because today's successful MCP evidence did not identify them under the lean scan budget.
+
+### Optional MCP/news/Perplexity context
+- TE `combined_analysis`: technical parser error (`Expecting value: line 1 column 1`) on the first attempt and again after 10-second backoff/retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- TE `multi_timeframe`: all timeframe subchecks returned parser errors and the wrapper emitted HOLD/NO TRADE because alignment data was unavailable; logged as `retryable_error`, not evidence.
+- TE `compare_strategies`: 6mo daily winner MACD +58.14% over 2 trades vs buy-and-hold +46.27%; optional context only.
+- NVO `combined_analysis`: technical parser error (`Expecting value: line 1 column 1`) on the first attempt and again after 10-second backoff/retry; sentiment/news portions returned neutral/0 posts and 0 news. Not counted as evidence.
+- NVO `multi_timeframe`: all timeframe subchecks returned parser errors and the wrapper emitted HOLD/NO TRADE because alignment data was unavailable; logged as `retryable_error`, not evidence.
+- NVO `compare_strategies`: 6mo daily winner MACD +11.01% over 1 trade vs buy-and-hold -11.10%; optional context only.
+- Optional Perplexity script was attempted for TE/NVO catalyst corroboration, but `scripts/perplexity.sh` returned HTTP 401. This did not block the MCP/liquidity-gated process.
+
+### Qualified final candidates written to `memory/PREMARKET-CANDIDATES.json`
+
+#### TE — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +8.787%; close 10.40 above SMA20 9.727 / EMA50 7.982; RSI 61.23; TV volume 49.2M.
+- Liquidity filter reference: last 10.40; volume 49,023,600; 1D +11.23%; 5D +13.91%.
+- SPY/SPX outperformance thesis: TE has strong positive relative strength versus SPY (+11.54% 1D, +13.21% 5D) plus a fresh TradingView MCP top-gainer setup above key daily moving averages, so the thesis is benchmark-relative momentum rather than generic market beta.
+- Risk notes: not an upper-band breakout yet (close below BB_upper 12.232); optional combined/multi-timeframe checks were retryable parser failures and did not add score; market-open must revalidate liquidity/quote/cash and use 10% trailing-stop / 1% portfolio-risk sizing.
+
+#### NVO — candidate (NYSE)
+- MCP setup: `top_gainers` NYSE 1D, +4.249%; close 45.88 above SMA20 43.721 / EMA50 43.319; RSI 60.58; TV volume 17.1M.
+- Liquidity filter reference: last 45.88; volume 17,121,700; 1D +6.23%; 5D +11.85%.
+- SPY/SPX outperformance thesis: NVO has positive relative strength versus SPY (+6.54% 1D, +11.15% 5D) plus a current MCP top-gainer recovery above SMA20/EMA50, so the thesis is stock-specific relative momentum rather than broad market beta.
+- Risk notes: lower MCP percent move than TE and close is just below BB_upper 46.129; optional combined/multi-timeframe checks were retryable parser failures and did not add score; no news/sentiment corroboration; market-open must revalidate liquidity/quote/cash and use 10% trailing-stop / 1% portfolio-risk sizing.
+
+Default decision: market-open has 2 MCP-screened liquid candidates to consider (TE, NVO). Pre-market submitted no broker orders; market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% trailing-stop / 1% portfolio-risk gates before any paper order.
