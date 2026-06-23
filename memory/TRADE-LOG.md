@@ -424,3 +424,26 @@ No market-open candidates passed the TradingView MCP + top-volume liquidity inte
 - Relative strength vs SPY: 1D 11.54%, 5D 13.21%
 - Gate reasons: none
 - Broker action: paper_submit buy_ok=True trailing_stop_ok=True qty=479.
+
+
+## EOD Snapshot — 2026-06-23
+
+### Account
+```json
+{"account_blocked": false, "buying_power": "171176.02", "cash": "32739.75", "currency": "USD", "daytrade_count": 0, "daytrading_buying_power": "171176.02", "equity": "47102.97", "long_market_value": "14363.22", "pattern_day_trader": false, "portfolio_value": "47102.97", "position_market_value": "14363.22", "short_market_value": "0", "status": "ACTIVE", "trade_suspended_by_user": false, "trading_blocked": false, "transfers_blocked": false}
+```
+
+### Positions
+```json
+[{"avg_entry_price": "31.73", "current_price": "33.03", "market_value": "5185.71", "qty": "157", "symbol": "HIMS", "unrealized_pl": "204.1", "unrealized_plpc": "0.04097"}, {"avg_entry_price": "14.12", "current_price": "13.53", "market_value": "4708.44", "qty": "348", "symbol": "RKT", "unrealized_pl": "-205.32", "unrealized_plpc": "-0.04178"}, {"avg_entry_price": "9.93", "current_price": "9.33", "market_value": "4469.07", "qty": "479", "symbol": "TE", "unrealized_pl": "-287.4", "unrealized_plpc": "-0.06042"}]
+```
+
+### Benchmark
+- Benchmark: SPY close $733.58
+- Bot daily return: -3.18%
+- SPY daily return: -1.45%
+- Bot cumulative return: -5.70%
+- SPY cumulative return: -2.23%
+- Alpha vs SPY: -3.47%
+- Drawdown: -6.36%
+- Judgment: BEHIND: Codex trails SPY by +3.47% cumulative alpha.
