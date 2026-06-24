@@ -762,3 +762,34 @@ These were rejected even when TradingView reported large moves or high TV volume
 - Risk notes: lower MCP percent move than TE and close is just below BB_upper 46.129; optional combined/multi-timeframe checks were retryable parser failures and did not add score; no news/sentiment corroboration; market-open must revalidate liquidity/quote/cash and use 10% trailing-stop / 1% portfolio-risk sizing.
 
 Default decision: market-open has 2 MCP-screened liquid candidates to consider (TE, NVO). Pre-market submitted no broker orders; market-open must re-read today's candidate file, recheck top-volume liquidity, current quotes, cash, existing exposure, and 10% trailing-stop / 1% portfolio-risk gates before any paper order.
+
+## Pre-market Research — 2026-06-24
+
+Source summary: `python -m codex_trader.research_export` supplied the Yahoo/yfinance top-100-volume universe as a **liquidity filter only** plus SPY benchmark context. TradingView MCP remained the required technical evidence layer. SPY benchmark proxy from the pre-run: 1D -1.45%, 5D -0.47%; final candidates still require a concrete TradingView MCP setup and a specific thesis for outperforming SPY/SPX over the swing window. Safety boundary: Alpaca paper only; pre-market submitted no broker orders.
+
+### Liquidity / benchmark context
+- The liquidity filter contained 100 symbols. High Yahoo relative-momentum references included INFQ, NVO, KEEL, WULF, AAL, QBTS, JBLU, DNN, CPNG, QUBT, MARA, and T, but Yahoo/yfinance score alone was not accepted as alpha evidence.
+- Existing Alpaca paper positions checked through `scripts/alpaca.sh`: HIMS 157 shares (+4.66% unrealized), RKT 348 shares (-4.32% unrealized), and TE 479 shares (-5.14% unrealized). Open 10% trailing-stop sell orders were present for HIMS, RKT, and TE; no unprotected open positions were observed in this pre-market read-only check. RKT/TE remain above the -7% cut threshold in this snapshot but should be rechecked by the broker-management routine if weakness continues.
+
+### MCP scans used
+- MCP calls were kept serial. After the first two top-gainer scans produced no liquid intersections, I expanded only to the listed broad scanners and treated empty/failing outputs as health context, not evidence.
+- `mcp_tradingview_top_gainers(exchange="NASDAQ", timeframe="1D", limit=50)` produced high-percentage movers but no normalized symbols in today's `liquidity_symbols` filter.
+- `mcp_tradingview_top_gainers(exchange="NYSE", timeframe="1D", limit=50)` also produced no normalized symbols in today's `liquidity_symbols` filter; prior candidates such as BFLY were absent from today's liquidity filter.
+- `mcp_tradingview_volume_breakout_scanner` on NASDAQ and NYSE returned empty result sets.
+- `mcp_tradingview_smart_volume_scanner` on NASDAQ and NYSE returned empty result sets.
+- `mcp_tradingview_rating_filter` on NASDAQ and NYSE for ratings 3 and 2 returned empty result sets.
+- `mcp_tradingview_bollinger_scan` hit retryable parser failures (`Expecting value: line 1 column 1`) on NASDAQ after a 10-second retry and on NYSE. These failures were logged as MCP health issues and were not counted as evidence.
+- Specific fallback MCP checks for top liquid relative-momentum references did not create candidates: NVO `coin_analysis` failed with the same parser error, and NVO/INFQ `combined_analysis` returned technical parser errors plus neutral/0-post sentiment and no news. These failed technical blocks were not counted as evidence.
+
+### Rejected MCP hits outside the liquidity filter
+These were rejected even when TradingView reported large moves or high TV volume because they were absent from today's `liquidity_symbols` filter: NASDAQ:INHD (+3457.658%, TV volume 278.9M), NASDAQ:FCUV (+88.532%, TV volume 77.2M), NASDAQ:ADTX (+82.096%, TV volume 4.5B), NASDAQ:CGTL (+24.320%, TV volume 93.5M), NASDAQ:GITS (+18.801%, TV volume 37.9M), NASDAQ:BLZE (+13.094%, TV volume 35.5M), NYSE:PRIM (+28.226%, TV volume 9.9M), NYSE:BFLY (+12.463%, TV volume 12.8M), NYSE:EVC (+15.197%, TV volume 3.1M), NYSE:DELL (+8.299%, TV volume 6.6M), NYSE:HPE (+5.773%, TV volume 20.6M), and NYSE:NCLH (+5.593%, TV volume 18.3M). No non-liquid MCP hit was promoted.
+
+### Liquid names reviewed but not written as candidates
+- INFQ and NVO had strong liquidity-filter relative strength versus SPY, but their targeted `combined_analysis` technical blocks failed with retryable parser errors; without a successful MCP technical setup, they were not eligible.
+- KEEL, WULF, AAL, QBTS, JBLU, DNN, CPNG, QUBT, MARA, T, and other Yahoo-relative leaders were not promoted because today's successful MCP scanners did not identify them and failed/empty MCP checks cannot substitute for evidence.
+
+### Qualified final candidates written to `memory/PREMARKET-CANDIDATES.json`
+
+None. The file was overwritten for 2026-06-24 with an empty `candidates` array.
+
+Default decision: HOLD. Market-open has no new MCP-screened liquid candidates to consider from today's pre-market research. Market-open should still recheck existing positions, cash, and protective stops; pre-market submitted no broker orders.
